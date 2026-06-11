@@ -1,0 +1,6 @@
+{
+  "name": "NeuroDrive AURA Dashboard",
+  "description": "An AI-powered adaptive co-driving assistant integrating wearable biometric monitoring, in-cabin analysis, and real-time environment intelligence.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
