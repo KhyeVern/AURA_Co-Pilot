@@ -92,7 +92,7 @@ YAWN_WINDOW_S    = 600.0   # 10-minute yawn frequency window
 
 # ── Framework sensor fusion weights (framework_mbtmy.md) ─────────────────────
 #  Vision metrics: PERCLOS 25%, Blink 15%, Yawn 5%  = 45%
-#  Non-vision:     HRV 20%, BPM 15%, Sleep 10%, Visibility 5%, Traffic 5% = 55%
+#  Non-vision:     HRV 20%, BPM 15%, Sleep Quality 10%, Visibility 5%, Traffic 5% = 55%
 #  Total = 100%
 WEIGHTS: Dict[str, float] = {
     "perclos":    0.25,
@@ -466,8 +466,11 @@ def _compute_fusion(
         PERCLOS (25%), Blink Frequency (15%), Yawn Frequency (5%)
 
     Non-vision fallbacks (55% of model, default baseline Rᵢ = 0.1):
-        HRV (20%), BPM (15%), Sleep Duration (10%),
+        HRV (20%), BPM (15%), Sleep Quality (10%),
         Visibility (5%), Traffic Density (5%)
+
+        Sleep Quality uses Apple Watch scale (0–100):
+        Excellent ≥90, Good ≥75, Fair ≥50, Poor ≥25, Very Poor ≥10, Critical <10
 
     Returns:
         (total_risk: float [0,1], dri_pct: float [0,100])
@@ -678,7 +681,9 @@ class AuraCameraTracker:
         self,
         hrv_risk:        float = 0.1,   # HRV (weight 20%)
         bpm_risk:        float = 0.1,   # Heart rate BPM (weight 15%)
-        sleep_risk:      float = 0.1,   # Prior sleep duration (weight 10%)
+        sleep_risk:      float = 0.1,   # Sleep quality score 0-100 → Rᵢ (weight 10%)
+                                        # Apple Watch scale: ≥75 Good (0.1), ≥50 Fair (0.3),
+                                        #                    ≥25 Poor (0.5), ≥10 Very Poor (0.7), <10 Critical (0.9)
         visibility_risk: float = 0.1,   # Road visibility (weight 5%)
         traffic_risk:    float = 0.1,   # Traffic density (weight 5%)
     ):
@@ -1320,7 +1325,7 @@ if __name__ == "__main__":
     print(f"║  EAR Threshold    : {EAR_CLOSED_THRESHOLD:<46}║")
     print(f"║  MAR Threshold    : {MAR_YAWN_THRESHOLD:<46}║")
     print(f"║  Fusion Weights   : PERCLOS 25%  Blink 15%  Yawn 5%            ║")
-    print(f"║                     HRV 20%  BPM 15%  Sleep 10%  Env 10%       ║")
+    print(f"║                     HRV 20%  BPM 15%  Sleep Quality 10%  Env 10% ║")
     print(f"║  Metrics API      : http://127.0.0.1:{METRICS_PORT}/metrics              ║")
     print("╚══════════════════════════════════════════════════════════════════╝\n")
 

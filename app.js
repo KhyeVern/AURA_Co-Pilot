@@ -44,11 +44,14 @@ function riskHRV(hrv) {
   return 0.9;
 }
 
-function riskSleep(hours) {
-  if (hours >= 7 && hours <= 9) return 0.1;
-  if (hours >= 6) return 0.3;
-  if (hours >= 4) return 0.5;
-  return 0.7;
+// Apple Watch Sleep Quality Scale (0–100)
+// 90–100 Excellent, 75–89 Good, 50–74 Fair, 25–49 Poor, 10–24 Very Poor, 0–9 Critical
+function riskSleep(score) {
+  if (score >= 75) return 0.1;  // Excellent / Good
+  if (score >= 50) return 0.3;  // Fair
+  if (score >= 25) return 0.5;  // Poor
+  if (score >= 10) return 0.7;  // Very Poor
+  return 0.9;                   // Critical
 }
 
 function riskPERCLOS(pct) {
@@ -258,7 +261,7 @@ function updateRiskChips(risks, r) {
 // ─────────────────────────────────────────────────────────────────────────────
 const BREAKDOWN_LABELS = {
   perclos: 'PERCLOS', hrv: 'HRV', hr: 'Heart Rate', blink: 'Blink Freq.',
-  sleep: 'Sleep', yawn: 'Yawn Freq.', visibility: 'Visibility', traffic: 'Traffic',
+  sleep: 'Sleep Quality', yawn: 'Yawn Freq.', visibility: 'Visibility', traffic: 'Traffic',
 };
 
 function updateBreakdownList(risks) {
@@ -289,6 +292,10 @@ function updateAdaptations(dri, risks, r) {
   const isImpaired = dri > 20 && dri <= 40;
   const isReduced  = dri > 40 && dri <= 60;
 
+  // Sleep quality poor or below (Apple Watch scale: score < 50 → R ≥ 0.5)
+  // Escalates all safety sensors and activates seat massage regardless of DRI level
+  const sleepImpaired = risks.sleep >= 0.5;
+
   // ── Ambient Music ────────────────────────────────────────────────────────
   const musicItem = document.getElementById('adapt-music');
   const musicVal  = document.getElementById('adapt-music-val');
@@ -310,6 +317,11 @@ function updateAdaptations(dri, risks, r) {
     musicItem.className = 'adapt-item adapt-active';
     musicVal.textContent = 'Alert Tone — Low Volume';
     musicInd.className = 'adapt-indicator adapt-ind-alert';
+  } else if (sleepImpaired) {
+    // Poor or below sleep quality — boost to alertness music
+    musicItem.className = 'adapt-item adapt-active';
+    musicVal.textContent = 'Upbeat Music — Low Sleep Alert';
+    musicInd.className = 'adapt-indicator adapt-ind-alert';
   } else if (isReduced || logState === 'Reduced_yawn' || logState === 'Reduced_perclos') {
     musicItem.className = 'adapt-item adapt-active';
     musicVal.textContent = 'Upbeat Music — Alertness Mode';
@@ -329,6 +341,11 @@ function updateAdaptations(dri, risks, r) {
     massageItem.className = 'adapt-item adapt-active';
     massageVal.textContent = 'Fatigue Vibration Alert';
     massageInd.className = 'adapt-indicator adapt-ind-critical';
+  } else if (sleepImpaired) {
+    // Poor or below sleep quality — seat massage on + alertness lighting
+    massageItem.className = 'adapt-item adapt-active';
+    massageVal.textContent = '💆 Seat Massage On — Low Sleep';
+    massageInd.className = 'adapt-indicator adapt-ind-alert';
   } else if (logState === 'Stress' || logState === 'HighHR') {
     massageItem.className = 'adapt-item adapt-stress';
     massageVal.textContent = 'Massage & Violet Ambient Light On';
@@ -391,7 +408,7 @@ function updateAdaptations(dri, risks, r) {
   if (isCritical) {
     collisionVal.textContent = 'MAXIMUM — Pre-Brake Active';
     collisionInd.className = 'adapt-indicator adapt-ind-critical';
-  } else if (isImpaired || logState === 'LowHR' || logState === 'LowHRV' || logState === 'HighHR') {
+  } else if (isImpaired || sleepImpaired || logState === 'LowHR' || logState === 'LowHRV' || logState === 'HighHR') {
     collisionVal.textContent = 'High Alert +2s Early';
     collisionInd.className = 'adapt-indicator adapt-ind-alert';
   } else if (isReduced || logState === 'Stress' || logState === 'Reduced_yawn' || logState === 'Reduced_perclos') {
@@ -408,7 +425,7 @@ function updateAdaptations(dri, risks, r) {
   if (isCritical) {
     lkaVal.textContent = 'AUTO STEER — Pull Over Mode';
     lkaInd.className = 'adapt-indicator adapt-ind-critical';
-  } else if (isImpaired || logState === 'LowHR' || logState === 'LowHRV') {
+  } else if (isImpaired || sleepImpaired || logState === 'LowHR' || logState === 'LowHRV') {
     lkaVal.textContent = 'Aggressive Correction';
     lkaInd.className = 'adapt-indicator adapt-ind-alert';
   } else if (isReduced || logState === 'HighHR' || logState === 'Stress' || logState === 'Reduced_yawn' || logState === 'Reduced_perclos') {
@@ -425,7 +442,7 @@ function updateAdaptations(dri, risks, r) {
   if (isCritical) {
     alertVal.textContent = 'MAX — Continuous SOS';
     alertInd.className = 'adapt-indicator adapt-ind-critical';
-  } else if (isImpaired || logState === 'LowHR' || logState === 'LowHRV') {
+  } else if (isImpaired || sleepImpaired || logState === 'LowHR' || logState === 'LowHRV') {
     alertVal.textContent = 'High — Haptic + Audio';
     alertInd.className = 'adapt-indicator adapt-ind-alert';
   } else if (isReduced || logState === 'HighHR' || logState === 'Stress' || logState === 'Reduced_yawn' || logState === 'Reduced_perclos') {
@@ -443,7 +460,7 @@ function updateAdaptations(dri, risks, r) {
 function updateSliderFills() {
   [
     { id: 'hr', min: 0, max: 200 }, { id: 'hrv', min: 0, max: 100 },
-    { id: 'sleep', min: 0, max: 10 }, { id: 'perclos', min: 0, max: 100 },
+    { id: 'sleep', min: 0, max: 100 }, { id: 'perclos', min: 0, max: 100 },
     { id: 'blink', min: 0, max: 50 }, { id: 'yawn', min: 0, max: 15 },
   ].forEach(({ id, min, max }) => {
     const slider = document.getElementById(`${id}-slider`);
@@ -662,12 +679,14 @@ function startCameraPolling() {
 // ─────────────────────────────────────────────────────────────────────────────
 // PRESET DRIVER STATES
 // ─────────────────────────────────────────────────────────────────────────────
+// sleep values use Apple Watch Sleep Quality Score (0–100)
+// Excellent ≥75, Good ≥75, Fair ≥50, Poor ≥25, Very Poor ≥10, Critical <10
 const PRESETS = {
-  calm:     { hr: 60,  hrv: 60, sleep: 8,   perclos: 5,  blink: 15, yawn: 1,  visibility: 'clear',  traffic: 'low' },
-  tired:    { hr: 70,  hrv: 42, sleep: 6.5, perclos: 15, blink: 20, yawn: 3,  visibility: 'clear',  traffic: 'low' },
-  sleepy:   { hr: 65,  hrv: 32, sleep: 5,   perclos: 30, blink: 27, yawn: 7,  visibility: 'night',  traffic: 'low' },
-  stress:   { hr: 90,  hrv: 22, sleep: 6,   perclos: 10, blink: 25, yawn: 0,  visibility: 'haze',   traffic: 'heavy' },
-  critical: { hr: 110, hrv: 10, sleep: 3,   perclos: 50, blink: 40, yawn: 12, visibility: 'severe', traffic: 'gridlock' },
+  calm:     { hr: 60,  hrv: 60, sleep: 85,  perclos: 5,  blink: 15, yawn: 1,  visibility: 'clear',  traffic: 'low' },
+  tired:    { hr: 70,  hrv: 42, sleep: 55,  perclos: 15, blink: 20, yawn: 3,  visibility: 'clear',  traffic: 'low' },
+  sleepy:   { hr: 65,  hrv: 32, sleep: 30,  perclos: 30, blink: 27, yawn: 7,  visibility: 'night',  traffic: 'low' },
+  stress:   { hr: 90,  hrv: 22, sleep: 48,  perclos: 10, blink: 25, yawn: 0,  visibility: 'haze',   traffic: 'heavy' },
+  critical: { hr: 100, hrv: 10, sleep: 8,   perclos: 50, blink: 40, yawn: 12, visibility: 'severe', traffic: 'gridlock' },
 };
 
 function applyPreset(name) {

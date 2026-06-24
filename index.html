@@ -633,7 +633,7 @@
             </div>
           </div>
 
-          <!-- Sleep Duration -->
+          <!-- Sleep Quality -->
           <div class="bio-item" id="bio-sleep">
             <div class="bio-item-header">
               <div class="bio-icon icon-sleep">
@@ -642,20 +642,20 @@
                 </svg>
               </div>
               <div class="bio-label-group">
-                <span class="bio-label">Sleep Duration</span>
-                <span class="bio-unit">hours</span>
+                <span class="bio-label">Sleep Quality</span>
+                <span class="bio-unit">/100</span>
               </div>
               <div class="bio-value-group">
-                <input type="number" class="bio-num-input" id="sleep-num" value="8" min="0" max="10" step="0.5"
+                <input type="number" class="bio-num-input" id="sleep-num" value="85" min="0" max="100" step="1"
                   oninput="syncSlider('sleep', this.value)" />
                 <div class="bio-risk-chip" id="sleep-risk">R: 0.1</div>
               </div>
             </div>
             <div class="bio-slider-wrap">
-              <input type="range" class="bio-slider" id="sleep-slider" min="0" max="10" step="0.5" value="8"
+              <input type="range" class="bio-slider" id="sleep-slider" min="0" max="100" step="1" value="85"
                 oninput="syncNum('sleep', this.value); recalculate()" />
               <div class="bio-slider-track-fill" id="sleep-track-fill"></div>
-              <div class="slider-labels"><span>0h</span><span>4h</span><span>6h</span><span>7h</span><span>9h</span>
+              <div class="slider-labels"><span>0</span><span>25 Poor</span><span>50 Fair</span><span>75 Good</span><span>100</span>
               </div>
             </div>
           </div>
