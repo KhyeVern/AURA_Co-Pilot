@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Mercedes AURA Co-Pilot — Intelligent Driver Readiness Dashboard. Real-time biometric monitoring, fatigue detection, and adaptive safety system for premium vehicles." />
+  <title>AURA Co-Pilot | Mercedes Driver Readiness Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- ── CRITICAL EMERGENCY OVERLAY ────────────────────────────────────────── -->
+  <div id="emergency-overlay" class="emergency-overlay hidden" role="alertdialog" aria-modal="true"
+    aria-labelledby="emergency-title">
+    <div class="emergency-inner">
+      <div class="emergency-pulse-rings">
+        <div class="pulse-ring r1"></div>
+        <div class="pulse-ring r2"></div>
+        <div class="pulse-ring r3"></div>
+      </div>
+      <div class="emergency-icon">
+        <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="40" cy="40" r="38" stroke="#ff2d55" stroke-width="3" />
+          <path d="M40 22v22M40 54v4" stroke="#ff2d55" stroke-width="5" stroke-linecap="round" />
+        </svg>
+      </div>
+      <h1 id="emergency-title" class="emergency-title">CRITICAL EVENT</h1>
+      <p class="emergency-subtitle">SYSTEM INTERVENTION INITIATED</p>
+      <div class="emergency-divider"></div>
+      <p class="emergency-body">
+        The vehicle will safely pull over to the side of the road and<br />
+        immediately contact <strong>emergency services and authorities.</strong>
+      </p>
+      <div class="emergency-status-row">
+        <div class="e-status-item">
+          <span class="e-status-dot active"></span>
+          <span>Hazard Lights Activated</span>
+        </div>
+        <div class="e-status-item">
+          <span class="e-status-dot active"></span>
+          <span>Emergency Brake Assist Armed</span>
+        </div>
+        <div class="e-status-item">
+          <span class="e-status-dot active"></span>
+          <span>SOS Signal Broadcasting</span>
+        </div>
+      </div>
+      <button id="btn-dismiss-emergency" class="btn-dismiss" onclick="dismissEmergency()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+        Dismiss Emergency Event
+      </button>
+    </div>
+  </div>
+
+  <!-- ── TOP HEADER ─────────────────────────────────────────────────────────── -->
+  <header class="top-header">
+    <div class="header-left">
+      <div class="logo-star">
+        <img id="logo-img"
+          src="https://i.postimg.cc/VN6RVHjM/Mercedes-AURA-Logo.png"
+          alt="Mercedes AURA Co-Pilot Logo"
+          style="height:48px;width:auto;object-fit:contain;display:block;" />
+      </div>
+      <div class="brand-text">
+        <span class="brand-mercedes">MERCEDES</span>
+        <span class="brand-aura">AURA <em>Co-Pilot</em></span>
+      </div>
+    </div>
+    <div class="header-center">
+      <div class="live-clock" id="live-clock">--:--:--</div>
+      <div class="live-date" id="live-date">--</div>
+    </div>
+    <div class="header-right">
+      <div class="system-status">
+        <span class="status-dot pulse-green"></span>
+        <span class="status-text">SYSTEM ONLINE</span>
+      </div>
+      <div class="conn-icons">
+        <span class="conn-icon" title="GPS">
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 2a6 6 0 016 6c0 4.5-6 10-6 10S4 12.5 4 8a6 6 0 016-6zm0 4a2 2 0 100 4 2 2 0 000-4z" />
+          </svg>
+        </span>
+        <span class="conn-icon" title="Bluetooth">
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 2l4 4-4 4 4 4-4 4V2zm0 0L6 6l4 4-4 4 4 4" />
+          </svg>
+        </span>
+        <span class="conn-icon" title="Signal">
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <rect x="1" y="13" width="3" height="5" rx="1" />
+            <rect x="6" y="10" width="3" height="8" rx="1" />
+            <rect x="11" y="7" width="3" height="11" rx="1" />
+            <rect x="16" y="3" width="3" height="15" rx="1" />
+          </svg>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── MAIN DASHBOARD GRID ────────────────────────────────────────────────── -->
+  <main class="dashboard-grid">
+
+    <!-- ── COLUMN LEFT ─────────────────────────────────────────────────────── -->
+    <div class="col-left">
+
+      <!-- A. Camera Viewport -->
+      <section class="card camera-card" id="section-camera">
+        <div class="card-header">
+          <span class="card-title">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="2" y="5" width="16" height="12" rx="2" />
+              <circle cx="10" cy="11" r="3" />
+              <path d="M7 5V4a1 1 0 011-1h4a1 1 0 011 1v1" />
+            </svg>
+            Driver Monitor Camera
+          </span>
+          <div class="camera-toggle-wrap">
+            <label class="toggle-label" for="camera-toggle">LIVE</label>
+            <label class="switch" id="camera-switch-label">
+              <input type="checkbox" id="camera-toggle" checked onchange="handleCameraToggle(this)" />
+              <span class="slider-rail"></span>
+            </label>
+          </div>
+        </div>
+        <div class="camera-viewport" id="camera-viewport">
+          <!-- Live webcam feed -->
+          <video id="cam-video" autoplay playsinline muted></video>
+          <!-- Face tracking wireframe overlay -->
+          <canvas id="ft-canvas"></canvas>
+          <!-- HUD overlays on top of the video -->
+          <div class="cam-scan-line"></div>
+          <div class="cam-grid-overlay">
+            <div class="cam-corner tl"></div>
+            <div class="cam-corner tr"></div>
+            <div class="cam-corner bl"></div>
+            <div class="cam-corner br"></div>
+          </div>
+          <div class="cam-face-target">
+            <div class="face-ring"></div>
+            <div class="face-ring face-ring-inner"></div>
+          </div>
+          <div class="cam-readout">
+            <div class="readout-line">
+              <span class="readout-label">FOCUS</span><span class="readout-val" id="cam-focus">98%</span>
+            </div>
+            <div class="readout-line">
+              <span class="readout-label">INFRARED</span><span class="readout-val">ON</span>
+            </div>
+            <div class="readout-line">
+              <span class="readout-label">TRACK</span><span class="readout-val cam-track-val">LOCKED</span>
+            </div>
+          </div>
+          <div class="cam-live-badge" id="cam-live-badge">
+            <span class="cam-rec-dot"></span>LIVE
+          </div>
+          <div class="cam-offline-msg hidden" id="cam-offline-msg">
+            <svg viewBox="0 0 40 40" fill="none" stroke="#7a7a9d" stroke-width="1.5">
+              <circle cx="20" cy="20" r="18" />
+              <path d="M20 20m-7 0a7 7 0 1014 0 7 7 0 00-14 0" />
+              <line x1="5" y1="5" x2="35" y2="35" stroke="#ff2d55" stroke-width="2" />
+            </svg>
+            <span>Camera Offline</span>
+            <span class="cam-offline-sub">Manual Override Active</span>
+          </div>
+        </div>
+
+        <!-- ── Live Camera Metrics Strip (directly below viewport) ── -->
+        <div class="cam-live-metrics" id="cam-live-metrics">
+          <div class="clm-header">
+            <span class="clm-title">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="8" cy="8" r="6" />
+                <circle cx="8" cy="8" r="2.5" />
+              </svg>
+              Live Camera Metrics
+            </span>
+            <span class="clm-status" id="clm-status">
+              <span class="clm-dot" id="clm-dot"></span>
+              <span id="clm-status-text">Connecting…</span>
+            </span>
+          </div>
+          <div class="clm-grid">
+            <div class="clm-metric" id="clm-blink-wrap">
+              <div class="clm-icon">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M1 8s2.5-5 7-5 7 5 7 5" />
+                  <path d="M8 8v2.5" />
+                  <circle cx="8" cy="8" r="2" />
+                </svg>
+              </div>
+              <div class="clm-info">
+                <span class="clm-label">Blink Freq.</span>
+                <span class="clm-value" id="clm-blink">—</span>
+                <span class="clm-unit">blinks/min</span>
+              </div>
+              <div class="clm-risk-bar-wrap">
+                <div class="clm-risk-bar" id="clm-blink-bar"></div>
+              </div>
+            </div>
+            <div class="clm-metric" id="clm-ear-wrap">
+              <div class="clm-icon">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <ellipse cx="8" cy="8" rx="6" ry="4" />
+                  <circle cx="8" cy="8" r="2" />
+                </svg>
+              </div>
+              <div class="clm-info">
+                <span class="clm-label">PERCLOS</span>
+                <span class="clm-value" id="clm-ear">—</span>
+                <span class="clm-unit">% eye closure</span>
+              </div>
+              <div class="clm-risk-bar-wrap">
+                <div class="clm-risk-bar" id="clm-ear-bar"></div>
+              </div>
+            </div>
+            <div class="clm-metric" id="clm-yawn-wrap">
+              <div class="clm-icon">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="8" cy="8" r="6" />
+                  <path d="M5 9c0 1.7 1.3 3 3 3s3-1.3 3-3" />
+                  <circle cx="6" cy="6.5" r="1" fill="currentColor" />
+                  <circle cx="10" cy="6.5" r="1" fill="currentColor" />
+                </svg>
+              </div>
+              <div class="clm-info">
+                <span class="clm-label">Yawn Count</span>
+                <span class="clm-value" id="clm-yawn">—</span>
+                <span class="clm-unit">per 10 min</span>
+              </div>
+              <div class="clm-risk-bar-wrap">
+                <div class="clm-risk-bar" id="clm-yawn-bar"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Reset Metrics Button -->
+        <button class="clm-reset-btn" id="clm-reset-btn" onclick="ft_resetMetrics()">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M2 8a6 6 0 1 0 1.5-3.9" />
+            <path d="M2 4v4h4" />
+          </svg>
+          Reset Metrics
+        </button>
+
+        <!-- Manual Override Controls -->
+        <div class="manual-override hidden" id="manual-override">
+          <div class="override-banner">
+            <svg viewBox="0 0 16 16" fill="none" stroke="#f5a623" stroke-width="1.5">
+              <path d="M8 2L14 13H2L8 2z" />
+              <path d="M8 7v3M8 11.5v.5" />
+            </svg>
+            Manual Override Active — Adjust metrics below
+          </div>
+        </div>
+      </section>
+
+      <!-- F. Vehicle Adaptations -->
+      <section class="card adaptations-card" id="section-adaptations">
+        <div class="card-header">
+          <span class="card-title">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 0v8l4 4" />
+            </svg>
+            Dynamic Vehicle Adaptations
+          </span>
+        </div>
+        <div class="adaptations-inner">
+          <div class="adapt-group">
+            <div class="adapt-group-label">Cabin Comfort</div>
+            <div class="adapt-item" id="adapt-music">
+              <div class="adapt-icon">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M9 18V5l12-2v13" />
+                  <circle cx="6" cy="18" r="3" />
+                  <circle cx="18" cy="16" r="3" />
+                </svg>
+              </div>
+              <div class="adapt-info">
+                <span class="adapt-name">Ambient Music</span>
+                <span class="adapt-val" id="adapt-music-val">—</span>
+              </div>
+              <div class="adapt-indicator" id="adapt-music-ind"></div>
+            </div>
+            <div class="adapt-item" id="adapt-massage">
+              <div class="adapt-icon">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M5 10c0-2.8 2.2-5 5-5s5 2.2 5 5-2.2 5-5 5" />
+                  <path d="M5 10H3M17 10h-2M10 5V3M10 17v-2" />
+                </svg>
+              </div>
+              <div class="adapt-info">
+                <span class="adapt-name">Massage & Lighting</span>
+                <span class="adapt-val" id="adapt-massage-val">—</span>
+              </div>
+              <div class="adapt-indicator" id="adapt-massage-ind"></div>
+            </div>
+            <div class="adapt-item" id="adapt-temp">
+              <div class="adapt-icon">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M10 2v8.5M10 18a4 4 0 100-8 4 4 0 000 8z" />
+                  <path d="M10 2v1M10 14v4" />
+                </svg>
+              </div>
+              <div class="adapt-info">
+                <span class="adapt-name">Climate Control</span>
+                <span class="adapt-val" id="adapt-temp-val">22°C Nominal</span>
+              </div>
+              <div class="adapt-indicator adapt-ind-active" id="adapt-temp-ind"></div>
+            </div>
+          </div>
+          <div class="adapt-group">
+            <div class="adapt-group-label">Safety Sensors</div>
+            <div class="adapt-item" id="adapt-collision">
+              <div class="adapt-icon">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M3 17L10 3l7 14H3z" />
+                  <path d="M10 9v3M10 14v1" />
+                </svg>
+              </div>
+              <div class="adapt-info">
+                <span class="adapt-name">Collision Warning</span>
+                <span class="adapt-val" id="adapt-collision-val">Standard</span>
+              </div>
+              <div class="adapt-indicator adapt-ind-active" id="adapt-collision-ind"></div>
+            </div>
+            <div class="adapt-item" id="adapt-lka">
+              <div class="adapt-icon">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M4 18L10 4l6 14" />
+                  <path d="M7 14h6" />
+                </svg>
+              </div>
+              <div class="adapt-info">
+                <span class="adapt-name">Lane Keep Assist</span>
+                <span class="adapt-val" id="adapt-lka-val">Active</span>
+              </div>
+              <div class="adapt-indicator adapt-ind-active" id="adapt-lka-ind"></div>
+            </div>
+            <div class="adapt-item" id="adapt-alert">
+              <div class="adapt-icon">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M10 2v1M18 10h-1M4 4l.7.7M16 4l-.7.7M10 6a4 4 0 100 8 4 4 0 000-8z" />
+                </svg>
+              </div>
+              <div class="adapt-info">
+                <span class="adapt-name">Alert Aggressiveness</span>
+                <span class="adapt-val" id="adapt-alert-val">Normal</span>
+              </div>
+              <div class="adapt-indicator adapt-ind-active" id="adapt-alert-ind"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ── COLUMN CENTER ───────────────────────────────────────────────────── -->
+    <div class="col-center">
+
+      <!-- C. DRI Main Gauge -->
+      <section class="card dri-card" id="section-dri">
+        <div class="card-header">
+          <span class="card-title">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="10" cy="10" r="8" />
+              <path d="M10 6v4l2.5 2.5" />
+            </svg>
+            Driver Readiness Index
+          </span>
+          <div class="dri-state-badge" id="dri-state-badge">OPTIMAL</div>
+        </div>
+        <div class="dri-main">
+          <div class="dri-gauge-wrap">
+            <svg class="dri-gauge-svg" id="dri-gauge-svg" viewBox="0 0 240 240">
+              <defs>
+                <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#00c8ff" />
+                  <stop offset="100%" stop-color="#9b5fff" />
+                </linearGradient>
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                  <feMerge>
+                    <feMergeNode in="coloredBlur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <!-- Background track -->
+              <circle class="gauge-track" cx="120" cy="120" r="100" fill="none" stroke="#1a1a2e" stroke-width="18" />
+              <!-- Filled arc -->
+              <circle class="gauge-arc" id="gauge-arc" cx="120" cy="120" r="100" fill="none"
+                stroke="url(#gaugeGradient)" stroke-width="18" stroke-linecap="round" stroke-dasharray="628"
+                stroke-dashoffset="0" transform="rotate(-90 120 120)" filter="url(#glow)" />
+              <!-- Tick marks -->
+              <g id="gauge-ticks"></g>
+              <!-- Center value -->
+              <text x="120" y="108" text-anchor="middle" class="gauge-value-text" id="gauge-value-text">100</text>
+              <text x="120" y="135" text-anchor="middle" class="gauge-sub-text">DRI Score</text>
+            </svg>
+            <div class="dri-glow-ring" id="dri-glow-ring"></div>
+          </div>
+
+          <div class="dri-breakdown">
+            <div class="breakdown-title">Risk Factor Breakdown</div>
+            <div class="breakdown-list" id="breakdown-list">
+              <!-- dynamically populated -->
+            </div>
+            <div class="total-risk-row">
+              <span class="tr-label">Total Risk</span>
+              <span class="tr-bar-wrap">
+                <div class="tr-bar" id="total-risk-bar"></div>
+              </span>
+              <span class="tr-val" id="total-risk-val">0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- DRI Level Legend -->
+        <div class="dri-legend">
+          <div class="legend-item" data-range="81-100"><span class="legend-dot l-optimal"></span><span>81–100 Optimal</span></div>
+          <div class="legend-item" data-range="61-80"><span class="legend-dot l-acceptable"></span><span>61–80 Acceptable</span></div>
+          <div class="legend-item" data-range="41-60"><span class="legend-dot l-reduced"></span><span>41–60 Reduced</span></div>
+          <div class="legend-item" data-range="21-40"><span class="legend-dot l-impaired"></span><span>21–40 Impaired</span></div>
+          <div class="legend-item" data-range="0-20"><span class="legend-dot l-critical"></span><span>0–20 Critical</span></div>
+        </div>
+      </section>
+
+      <!-- AURA AI Recommendation Log -->
+      <section class="card aura-log-card" id="section-aura-log">
+        <div class="card-header">
+          <span class="card-title">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="10" cy="10" r="8"/>
+              <path d="M7 10h6M7 7h4M7 13h3"/>
+            </svg>
+            AURA Adaptive AI Log
+          </span>
+          <span class="aura-log-status" id="aura-log-status">
+            <span class="aura-log-dot"></span>ANALYSING
+          </span>
+        </div>
+        <div class="aura-log-body" id="aura-log-body">
+          <!-- Messages injected by JS -->
+        </div>
+        <div class="aura-log-cursor">
+          <span class="aura-cursor-blink">▋</span>
+          <span class="aura-cursor-label" id="aura-cursor-label">AURA is monitoring…</span>
+        </div>
+      </section>
+
+      <!-- D. Environmental Context -->
+      <section class="card env-card" id="section-environment">
+        <div class="card-header">
+          <span class="card-title">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M10 2a8 8 0 100 16A8 8 0 0010 2z" />
+              <path d="M2 10h16M10 2c-2.5 3-4 5-4 8s1.5 5 4 8M10 2c2.5 3 4 5 4 8s-1.5 5-4 8" />
+            </svg>
+            External Environment
+          </span>
+          <span class="env-weight-note">Each factor: 5% weight</span>
+        </div>
+        <div class="env-controls">
+          <div class="env-item">
+            <div class="env-item-header">
+              <div class="env-icon">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M3 10s2-4 7-4 7 4 7 4-2 4-7 4-7-4-7-4z" />
+                  <circle cx="10" cy="10" r="2.5" />
+                </svg>
+              </div>
+              <span class="env-label">Weather</span>
+              <span class="env-risk-badge" id="env-visibility-risk">R: 0.1</span>
+            </div>
+            <div class="env-selector" id="env-visibility-selector">
+              <button class="env-opt active" id="vis-opt-clear" data-val="clear"
+                onclick="setVisibility('clear')">Clear</button>
+              <button class="env-opt" id="vis-opt-haze" data-val="haze" onclick="setVisibility('haze')">Haze / Fog</button>
+              <button class="env-opt" id="vis-opt-rain" data-val="rain" onclick="setVisibility('rain')">Heavy Rain</button>
+              <button class="env-opt" id="vis-opt-night" data-val="night"
+                onclick="setVisibility('night')">Night</button>
+              <button class="env-opt env-opt-danger" id="vis-opt-severe" data-val="severe"
+                onclick="setVisibility('severe')">Severe Storm</button>
+            </div>
+          </div>
+          <div class="env-item">
+            <div class="env-item-header">
+              <div class="env-icon">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="2" y="11" width="5" height="7" rx="1" />
+                  <rect x="7.5" y="8" width="5" height="10" rx="1" />
+                  <rect x="13" y="5" width="5" height="13" rx="1" />
+                  <path d="M4.5 11V9a2 2 0 012-2h1" />
+                </svg>
+              </div>
+              <span class="env-label">Traffic Conditions</span>
+              <span class="env-risk-badge" id="env-traffic-risk">R: 0.1</span>
+            </div>
+            <div class="env-selector">
+              <button class="env-opt active" id="traf-opt-low" data-val="low" onclick="setTraffic('low')">Low</button>
+              <button class="env-opt" id="traf-opt-medium" data-val="medium"
+                onclick="setTraffic('medium')">Medium</button>
+              <button class="env-opt" id="traf-opt-heavy" data-val="heavy" onclick="setTraffic('heavy')">Heavy</button>
+              <button class="env-opt env-opt-danger" id="traf-opt-gridlock" data-val="gridlock"
+                onclick="setTraffic('gridlock')">Gridlock</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ── COLUMN RIGHT ────────────────────────────────────────────────────── -->
+    <div class="col-right">
+      <!-- E. Preset States -->
+      <section class="card preset-card" id="section-presets">
+        <div class="card-header">
+          <span class="card-title">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="10" cy="10" r="8" />
+              <path d="M10 6v4l3 3" />
+            </svg>
+            Quick Preset Driver States
+          </span>
+        </div>
+        <div class="preset-grid">
+          <button id="preset-calm" class="preset-btn preset-calm" onclick="applyPreset('calm')"
+            title="Calm &amp; Relaxed">
+            <span class="preset-icon">😌</span>
+            <span class="preset-name">Calm &<br />Relaxed</span>
+            <span class="preset-dri">DRI ~90</span>
+          </button>
+          <button id="preset-tired" class="preset-btn preset-tired" onclick="applyPreset('tired')" title="Tired">
+            <span class="preset-icon">😪</span>
+            <span class="preset-name">Tired</span>
+            <span class="preset-dri">DRI ~65</span>
+          </button>
+          <button id="preset-sleepy" class="preset-btn preset-sleepy" onclick="applyPreset('sleepy')" title="Sleepy">
+            <span class="preset-icon">😴</span>
+            <span class="preset-name">Sleepy</span>
+            <span class="preset-dri">DRI ~45</span>
+          </button>
+          <button id="preset-stress" class="preset-btn preset-stress" onclick="applyPreset('stress')" title="Stress">
+            <span class="preset-icon">😰</span>
+            <span class="preset-name">Stress</span>
+            <span class="preset-dri">DRI ~50</span>
+          </button>
+          <button id="preset-critical" class="preset-btn preset-critical" onclick="applyPreset('critical')"
+            title="Critical">
+            <span class="preset-icon">🚨</span>
+            <span class="preset-name">Critical<br />Fatigue</span>
+            <span class="preset-dri">DRI ~10</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- B. Biometrics Panel -->
+      <section class="card biometrics-card" id="section-biometrics">
+        <div class="card-header">
+          <span class="card-title">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3.5 9.5a5 5 0 009.5-2.1A5 5 0 0117 9.5c0 4.5-7 8.5-7 8.5S3.5 14 3.5 9.5z" />
+            </svg>
+            Biometric Inputs
+          </span>
+          <span class="biometric-note">Drag sliders to simulate</span>
+        </div>
+        <div class="biometrics-list" id="biometrics-list">
+
+          <!-- Heart Rate -->
+          <div class="bio-item" id="bio-hr">
+            <div class="bio-item-header">
+              <div class="bio-icon icon-hr">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M3.5 9.5a5 5 0 009.5-2.1A5 5 0 0117 9.5c0 4.5-7 8.5-7 8.5S3.5 14 3.5 9.5z" />
+                </svg>
+              </div>
+              <div class="bio-label-group">
+                <span class="bio-label">Heart Rate</span>
+                <span class="bio-unit">BPM</span>
+              </div>
+              <div class="bio-value-group">
+                <input type="number" class="bio-num-input" id="hr-num" value="60" min="0" max="200"
+                  oninput="syncSlider('hr', this.value)" />
+                <div class="bio-risk-chip" id="hr-risk">R: 0.1</div>
+              </div>
+            </div>
+            <div class="bio-slider-wrap">
+              <input type="range" class="bio-slider" id="hr-slider" min="0" max="200" value="60"
+                oninput="syncNum('hr', this.value); recalculate()" />
+              <div class="bio-slider-track-fill" id="hr-track-fill"></div>
+              <div class="slider-labels"><span>0</span><span>50</span><span>70</span><span>100</span><span>150+</span>
+              </div>
+            </div>
+            <div class="bio-ecg-mini" id="hr-ecg">
+              <canvas id="ecg-canvas" width="250" height="32"></canvas>
+            </div>
+          </div>
+
+          <!-- HRV -->
+          <div class="bio-item" id="bio-hrv">
+            <div class="bio-item-header">
+              <div class="bio-icon icon-hrv">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M2 10h3l2-6 3 12 2-8 2 4h4" />
+                </svg>
+              </div>
+              <div class="bio-label-group">
+                <span class="bio-label">HRV (RMSSD)</span>
+                <span class="bio-unit">ms</span>
+              </div>
+              <div class="bio-value-group">
+                <input type="number" class="bio-num-input" id="hrv-num" value="60" min="0" max="100"
+                  oninput="syncSlider('hrv', this.value)" />
+                <div class="bio-risk-chip" id="hrv-risk">R: 0.1</div>
+              </div>
+            </div>
+            <div class="bio-slider-wrap">
+              <input type="range" class="bio-slider" id="hrv-slider" min="0" max="100" value="60"
+                oninput="syncNum('hrv', this.value); recalculate()" />
+              <div class="bio-slider-track-fill" id="hrv-track-fill"></div>
+              <div class="slider-labels"><span>0</span><span>15</span><span>25</span><span>50</span><span>100</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sleep Duration -->
+          <div class="bio-item" id="bio-sleep">
+            <div class="bio-item-header">
+              <div class="bio-icon icon-sleep">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M17 12A7 7 0 119 3c0 5 4 9 8 9z" />
+                </svg>
+              </div>
+              <div class="bio-label-group">
+                <span class="bio-label">Sleep Duration</span>
+                <span class="bio-unit">hours</span>
+              </div>
+              <div class="bio-value-group">
+                <input type="number" class="bio-num-input" id="sleep-num" value="8" min="0" max="10" step="0.5"
+                  oninput="syncSlider('sleep', this.value)" />
+                <div class="bio-risk-chip" id="sleep-risk">R: 0.1</div>
+              </div>
+            </div>
+            <div class="bio-slider-wrap">
+              <input type="range" class="bio-slider" id="sleep-slider" min="0" max="10" step="0.5" value="8"
+                oninput="syncNum('sleep', this.value); recalculate()" />
+              <div class="bio-slider-track-fill" id="sleep-track-fill"></div>
+              <div class="slider-labels"><span>0h</span><span>4h</span><span>6h</span><span>7h</span><span>9h</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- PERCLOS -->
+          <div class="bio-item" id="bio-perclos">
+            <div class="bio-item-header">
+              <div class="bio-icon icon-perclos">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <ellipse cx="10" cy="10" rx="8" ry="5" />
+                  <circle cx="10" cy="10" r="3" />
+                  <line x1="2" y1="15" x2="18" y2="5" stroke="currentColor" stroke-width="1.2" />
+                </svg>
+              </div>
+              <div class="bio-label-group">
+                <span class="bio-label">PERCLOS</span>
+                <span class="bio-unit">% eye closure</span>
+              </div>
+              <div class="bio-value-group">
+                <input type="number" class="bio-num-input" id="perclos-num" value="5" min="0" max="100"
+                  oninput="syncSlider('perclos', this.value)" />
+                <div class="bio-risk-chip" id="perclos-risk">R: 0.1</div>
+              </div>
+            </div>
+            <div class="bio-slider-wrap">
+              <input type="range" class="bio-slider" id="perclos-slider" min="0" max="100" value="5"
+                oninput="syncNum('perclos', this.value); recalculate()" />
+              <div class="bio-slider-track-fill" id="perclos-track-fill"></div>
+              <div class="slider-labels">
+                <span>0%</span><span>10%</span><span>20%</span><span>40%</span><span>100%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Blink Frequency -->
+          <div class="bio-item" id="bio-blink">
+            <div class="bio-item-header">
+              <div class="bio-icon icon-blink">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M2 10s3-5 8-5 8 5 8 5" />
+                  <path d="M10 10v3" />
+                  <circle cx="10" cy="10" r="2" />
+                </svg>
+              </div>
+              <div class="bio-label-group">
+                <span class="bio-label">Blink Frequency</span>
+                <span class="bio-unit">blinks/min</span>
+              </div>
+              <div class="bio-value-group">
+                <input type="number" class="bio-num-input" id="blink-num" value="15" min="0" max="50"
+                  oninput="syncSlider('blink', this.value)" />
+                <div class="bio-risk-chip" id="blink-risk">R: 0.1</div>
+              </div>
+            </div>
+            <div class="bio-slider-wrap">
+              <input type="range" class="bio-slider" id="blink-slider" min="0" max="50" value="15"
+                oninput="syncNum('blink', this.value); recalculate()" />
+              <div class="bio-slider-track-fill" id="blink-track-fill"></div>
+              <div class="slider-labels"><span>0</span><span>3</span><span>10</span><span>25</span><span>35+</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Yawn Frequency -->
+          <div class="bio-item" id="bio-yawn">
+            <div class="bio-item-header">
+              <div class="bio-icon icon-yawn">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="10" cy="10" r="8" />
+                  <path d="M7 11c0 2.2 1.3 4 3 4s3-1.8 3-4" />
+                  <circle cx="7" cy="8" r="1" fill="currentColor" />
+                  <circle cx="13" cy="8" r="1" fill="currentColor" />
+                </svg>
+              </div>
+              <div class="bio-label-group">
+                <span class="bio-label">Yawn Frequency</span>
+                <span class="bio-unit">per 10 min</span>
+              </div>
+              <div class="bio-value-group">
+                <input type="number" class="bio-num-input" id="yawn-num" value="1" min="0" max="15"
+                  oninput="syncSlider('yawn', this.value)" />
+                <div class="bio-risk-chip" id="yawn-risk">R: 0.1</div>
+              </div>
+            </div>
+            <div class="bio-slider-wrap">
+              <input type="range" class="bio-slider" id="yawn-slider" min="0" max="15" value="1"
+                oninput="syncNum('yawn', this.value); recalculate()" />
+              <div class="bio-slider-track-fill" id="yawn-track-fill"></div>
+              <div class="slider-labels"><span>0</span><span>2</span><span>5</span><span>7</span><span>15</span></div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="dashboard-footer">
+    <span>Mercedes AURA Co-Pilot &copy; 2026 &mdash; Intelligent Adaptive Driver Safety System</span>
+    <span class="footer-ver">v2.1.0 | Sensor Fusion Engine Active</span>
+  </footer>
+
+  <!-- MediaPipe Tasks Vision UMD bundle — creates window.vision global -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js" crossorigin="anonymous"
+    onload="console.log('[AURA] vision_bundle loaded. FaceLandmarker:', !!(window.vision && window.vision.FaceLandmarker))"
+    onerror="console.error('[AURA] Failed to load vision_bundle.js from CDN')">
+    </script>
+  <script src="face_tracker.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
