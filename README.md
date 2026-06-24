@@ -219,4 +219,4 @@ AURA_Co-Pilot/
 
 ---
 
-*Mercedes AURA Co-Pilot © 2026 — Intelligent Adaptive Driver Safety System | v2.1.0 | Sensor Fusion Engine*
+*Mercedes AURA © 2026 — Intelligent Adaptive Driver Safety System | v2.1.0 | Sensor Fusion Engine*
