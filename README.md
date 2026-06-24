@@ -8,10 +8,10 @@
 
 | Letter | Meaning |
 |--------|---------|
-| **A** | **Adaptive** — Learns and adapts to every journey |
-| **U** | **Understanding** — Interprets driver emotions, behavior, and context |
-| **R** | **Responsive** — Responds instantly with meaningful assistance |
-| **A** | **AI** — Powers intelligent, human-centered interactions |
+| **A** | **Adaptive** — Dynamically adjusts sensor sensitivity, alert aggressiveness, and cabin comfort profiles based on real-time driving conditions. |
+| **U** | **Understanding** — Constantly translates raw, multimodal biometrics into a clear, calculated Driver Readiness Index (DRI) score. |
+| **R** | **Responsive** — Dispatches millisecond-fast visual alerts, tactical physical feedback, and automated safety overrides the moment risk thresholds are breached. |
+| **A** | **AI** — Utilizes human-centered computer vision and smart contextual logic to evolve alongside the specific habits of the individual driver. |
 
 ---
 
