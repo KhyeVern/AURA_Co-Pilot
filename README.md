@@ -1,8 +1,6 @@
-# Mercedes AURA Co-Pilot
+# AURA Co-Pilot
 
 > **Adaptive Understanding & Responsive AI** — An intelligent driver readiness dashboard that fuses real-time computer vision, biometric telemetry, and environmental data to compute a live Driver Readiness Index (DRI) and trigger proactive cabin adaptations.
-
-![AURA Co-Pilot Banner](https://i.postimg.cc/VN6RVHjM/Mercedes-AURA-Logo.png)
 
 ---
 
@@ -219,4 +217,4 @@ AURA_Co-Pilot/
 
 ---
 
-*Mercedes AURA © 2026 — Intelligent Adaptive Driver Safety System | v2.1.0 | Sensor Fusion Engine*
+*AURA © 2026 — Intelligent Adaptive Driver Safety System | v2.1.0 | Sensor Fusion Engine*
