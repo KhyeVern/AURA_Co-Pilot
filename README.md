@@ -55,7 +55,7 @@ Core analytics engine — the **Driver Readiness Index (DRI)**:
 | HRV — RMSSD (ms) | **20%** |
 | Heart Rate (BPM) | **15%** |
 | Blink Frequency (blinks/min) | **15%** |
-| Sleep Quality (Apple Watch score 0–100) | **10%** |
+| Sleep Quality (score 0–100) | **10%** |
 | Yawn Frequency (per 10 min) | **5%** |
 | Weather / Visibility | **5%** |
 | Traffic Conditions | **5%** |
@@ -198,7 +198,7 @@ The dashboard will:
 | Driver State | Inputs Detected | AURA Response |
 |:---|:---|:---|
 | **Fatigue / Micro-sleep** | PERCLOS > 30%, EAR drops repeatedly, Yawn > 5/10min | Collision warning enhanced, Upbeat music, Gentle seat pulse |
-| **Poor Sleep Quality** | Sleep score < 50 (Poor or below on Apple Watch scale) | Seat Massage On, Collision +2s Early, LKA Aggressive, Haptic+Audio alerts |
+| **Poor Sleep Quality** | Sleep score < 50 (Poor or below) | Seat Massage On, Collision +2s Early, LKA Aggressive, Haptic+Audio alerts |
 | **High Stress / Agitation** | HR > 100 BPM, HRV < 25 ms, Heavy traffic | Calm music + Violet ambient light, Massage seat, Cooling to 20°C |
 | **Critical Health Emergency** | HR = 0 or HRV = 0, PERCLOS > 95% | Emergency overlay, Autonomous braking, SOS broadcast, Hazard lights |
 
