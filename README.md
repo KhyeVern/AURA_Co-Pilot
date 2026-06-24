@@ -2,8 +2,6 @@
 
 > **Adaptive Understanding & Responsive AI** — An intelligent driver readiness dashboard that fuses real-time computer vision, biometric telemetry, and environmental data to compute a live Driver Readiness Index (DRI) and trigger proactive cabin adaptations.
 
-![AURA Co-Pilot Banner](https://i.postimg.cc/VN6RVHjM/Mercedes-AURA-Logo.png)
-
 ---
 
 ## What AURA Stands For
