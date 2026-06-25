@@ -58,7 +58,7 @@ Core analytics engine — the **Driver Readiness Index (DRI)**:
 | Weather / Visibility | **5%** |
 | Traffic Conditions | **5%** |
 
-**Sleep Quality Risk Mapping (Apple Watch Scale):**
+**Sleep Quality Risk Mapping:**
 
 | Score Range | Category | Risk (Rᵢ) |
 |---|---|---|
