@@ -121,13 +121,16 @@ function getReadings() {
 // ─────────────────────────────────────────────────────────────────────────────
 // CRITICAL EVENT CHECK
 // ─────────────────────────────────────────────────────────────────────────────
-// NOTE: blink===0 is intentionally excluded here.
+// NOTE: blink===0 is intentionally excluded here from being a trigger.
 // Blink frequency is 0 on cold-start (before the face tracker has measured
 // any blinks), and remains 0 if the camera is off / face tracker is not
 // running. Treating it as a critical trigger would fire the emergency alarm
 // on every page load. HR=0 and HRV=0 are genuine "no signal" critical events;
 // PERCLOS>95 (eyes almost fully closed) is a genuine drowsiness emergency.
 function checkCriticalEvent(r) {
+  // Prevent emergency trigger on startup when face tracker hasn't measured blinks yet
+  if (r.blink === 0) return false;
+
   // Critical: no signal (0), HR below 20 BPM (dangerous bradycardia), or eyes almost fully closed
   return (r.hrv === 0 || r.hr === 0 || r.hr < 20 || r.perclos > 95);
 }

@@ -70,6 +70,7 @@ const ft_yawnBuffer    = [];  // [ts, 1]
 
 let ft_blinkClosed = false;
 let ft_blinkFrames = 0;
+let ft_lastBlinkTs = 0;
 let ft_yawnActive  = false;
 let ft_lastYawnTs  = -FT_YAWN_COOLDOWN;
 
@@ -418,13 +419,18 @@ function ft_processFrame(lm) {
     else ft_blinkFrames++;
   } else {
     if (ft_blinkClosed && ft_blinkFrames >= FT_BLINK_MIN_F) {
-      ft_blinkBuffer.push([now, 1]);
-      ft_updateBlinkFreq(now);   // recalculate freq only on new blink
+      if (now - ft_lastBlinkTs > 300) { // 300ms cooldown to prevent multiple counts
+        ft_blinkBuffer.push([now, 1]);
+        ft_lastBlinkTs = now;
+      }
     }
     ft_blinkClosed = false;
     ft_blinkFrames = 0;
   }
   ft_prune(ft_blinkBuffer, FT_BLINK_WIN);
+  
+  const blinkCutoff = now - 60000;
+  ft_blinkFreq = ft_blinkBuffer.filter(b => b[0] >= blinkCutoff).length;
 
   // ── YAWN ──────────────────────────────────────────────────────────────────
   if (mar > FT_MAR_YAWN) {
@@ -440,28 +446,7 @@ function ft_processFrame(lm) {
   ft_yawnCount = ft_yawnBuffer.length;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BLINK FREQUENCY — inter-blink interval method
-// Only recalculated when a new blink is confirmed.
-// Does NOT drift between blinks.
-// ─────────────────────────────────────────────────────────────────────────────
-function ft_updateBlinkFreq(now) {
-  const buf = ft_blinkBuffer;
-  if (buf.length < 2) {
-    ft_blinkFreq = 0;   // can't estimate yet — need at least 2 blinks
-    return;
-  }
-  // Average inter-blink interval over last 10 confirmed blinks
-  const recent = buf.slice(-10);
-  let totalMs = 0;
-  for (let i = 1; i < recent.length; i++) {
-    totalMs += recent[i][0] - recent[i - 1][0];
-  }
-  const avgIntervalMs = totalMs / (recent.length - 1);
-  // Guard: interval must be at least 200 ms (300 blinks/min max = impossible)
-  if (avgIntervalMs < 200) return;
-  ft_blinkFreq = Math.min(Math.round(60000 / avgIntervalMs), 60);
-}
+// Blink Frequency is now calculated as a rolling 60-second window in ft_processFrame.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UI UPDATE
@@ -493,12 +478,7 @@ function ft_updateUI() {
     String(ft_yawnCount), yawnRi, colorFn(yawnRi));
 
   ft_call(pushToSlider, 'perclos', ft_perclosPct);
-  // Only push blink freq once at least one inter-blink interval is measured.
-  // ft_blinkFreq stays 0 until 2+ blinks are confirmed (ft_updateBlinkFreq).
-  // Pushing 0 into the slider before that would lower the DRI with a false reading.
-  if (ft_blinkFreq > 0) {
-    ft_call(pushToSlider, 'blink', Math.min(50, ft_blinkFreq));
-  }
+  ft_call(pushToSlider, 'blink', Math.min(50, ft_blinkFreq));
   ft_call(pushToSlider, 'yawn',    Math.min(15, ft_yawnCount));
   ft_call(updateSliderFills);
   ft_call(recalculate);

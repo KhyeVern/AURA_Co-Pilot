@@ -705,13 +705,13 @@
                 <span class="bio-unit">blinks/min</span>
               </div>
               <div class="bio-value-group">
-                <input type="number" class="bio-num-input" id="blink-num" value="15" min="0" max="50"
+                <input type="number" class="bio-num-input" id="blink-num" value="0" min="0" max="50"
                   oninput="syncSlider('blink', this.value)" />
                 <div class="bio-risk-chip" id="blink-risk">R: 0.1</div>
               </div>
             </div>
             <div class="bio-slider-wrap">
-              <input type="range" class="bio-slider" id="blink-slider" min="0" max="50" value="15"
+              <input type="range" class="bio-slider" id="blink-slider" min="0" max="50" value="0"
                 oninput="syncNum('blink', this.value); recalculate()" />
               <div class="bio-slider-track-fill" id="blink-track-fill"></div>
               <div class="slider-labels"><span>0</span><span>3</span><span>10</span><span>25</span><span>35+</span>
