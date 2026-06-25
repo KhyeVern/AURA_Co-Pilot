@@ -37,7 +37,7 @@ Multi-modal data ingestion layer with two sub-components:
   - Measures: **Eye Aspect Ratio (EAR)**, **PERCLOS** (% eye closure over 1 min), **Blink Rate** (blinks/min), **Mouth Aspect Ratio (MAR)**, **Yawn Frequency** (per 10 min)
 
 - **Biometric / Telemetry Simulation**
-  - Interactive sliders for: Heart Rate (BPM), HRV (RMSSD in ms), Sleep Quality (Apple Watch 0–100 score)
+  - Interactive sliders for: Heart Rate (BPM), HRV (RMSSD in ms), Sleep Quality (range 0–100 score)
   - Environmental toggles: Weather / Visibility, Traffic Conditions
   - Quick Preset States: Calm, Tired, Sleepy, Stressed, Critical Fatigue
 
@@ -60,7 +60,7 @@ Core analytics engine — the **Driver Readiness Index (DRI)**:
 
 **Sleep Quality Risk Mapping (Apple Watch Scale):**
 
-| Score Range | Apple Watch Category | Risk (Rᵢ) |
+| Score Range | Category | Risk (Rᵢ) |
 |---|---|---|
 | 75 – 100 | 🟢 Excellent / Good | 0.1 |
 | 50 – 74 | 🟡 Fair | 0.3 |
