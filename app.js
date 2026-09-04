@@ -15,10 +15,16 @@ const state = {
   traffic: 'low',
   activePreset: null,
   emergencyActive: false,
+  emergencyAcknowledged: false,   // blocks re-trigger until readings clear
+  fatigueWarningActive: false,
+  fatigueAcknowledged: false,     // blocks re-trigger until readings clear
   chimeAudioCtx: null,
   chimeGainNode: null,
   chimeOsc: null,
   chimeInterval: null,
+  fatigueChimeAudioCtx: null,
+  fatigueChimeGainNode: null,
+  fatigueChimeInterval: null,
   ecgAnimFrame: null,
   ecgPhase: 0,
 };
@@ -28,7 +34,7 @@ const state = {
 // ─────────────────────────────────────────────────────────────────────────────
 function riskHR(bpm) {
   if (bpm === 0) return 0.9;
-  if (bpm >= 50 && bpm <= 70) return 0.1;
+  if (bpm >= 40 && bpm <= 70) return 0.1;  // Safe resting zone
   if (bpm > 70 && bpm <= 80) return 0.3;
   if (bpm > 80 && bpm <= 90) return 0.5;
   if (bpm > 90 && bpm <= 100) return 0.7;
@@ -73,8 +79,8 @@ function riskYawn(count) {
 
 function riskBlink(bpm) {
   if (bpm === 0) return 0.5;  // 0 = not yet measured by face tracker — neutral score
-  if (bpm < 3) return 0.9;
-  if (bpm >= 10 && bpm <= 20) return 0.1;
+  if (bpm < 4) return 0.9;   // Below healthy blink rate — high risk
+  if (bpm <= 20) return 0.1; // Healthy blink rate (4–20 blinks/min) — low risk
   if (bpm <= 25) return 0.3;
   if (bpm <= 35) return 0.5;
   return 0.7;
@@ -121,18 +127,33 @@ function getReadings() {
 // ─────────────────────────────────────────────────────────────────────────────
 // CRITICAL EVENT CHECK
 // ─────────────────────────────────────────────────────────────────────────────
-// NOTE: blink===0 is intentionally excluded here from being a trigger.
-// Blink frequency is 0 on cold-start (before the face tracker has measured
-// any blinks), and remains 0 if the camera is off / face tracker is not
-// running. Treating it as a critical trigger would fire the emergency alarm
-// on every page load. HR=0 and HRV=0 are genuine "no signal" critical events;
-// PERCLOS>95 (eyes almost fully closed) is a genuine drowsiness emergency.
+// Returns a human-readable reason string when a critical event is detected,
+// or null when readings are within safe limits.
+// HR=0 / HR<20 and HRV=0 are genuine hardware "no signal" / dangerous events
+// and must trigger regardless of whether the face tracker is running.
 function checkCriticalEvent(r) {
-  // Prevent emergency trigger on startup when face tracker hasn't measured blinks yet
-  if (r.blink === 0) return false;
+  if (r.hr === 0)
+    return 'Heart Rate = 0 BPM — No Signal Detected';
+  if (r.hr < 20)
+    return `Heart Rate = ${r.hr} BPM — Dangerous Bradycardia`;
+  if (r.hrv === 0)
+    return 'HRV = 0 ms — No Signal Detected';
 
-  // Critical: no signal (0), HR below 20 BPM (dangerous bradycardia), or eyes almost fully closed
-  return (r.hrv === 0 || r.hr === 0 || r.hr < 20 || r.perclos > 95);
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FATIGUE WARNING CHECK
+// ─────────────────────────────────────────────────────────────────────────────
+// Triggers when PERCLOS reaches 60% or above (significant eye closure indicating
+// severe fatigue), or when blink frequency drops to 0 while the camera is live.
+// Lower severity than checkCriticalEvent — uses a yellow overlay and
+// wake-up chime rather than the full red emergency response.
+function checkFatigueWarning(r) {
+  if (r.perclos >= 60) return true;
+  // blink===0 only meaningful as a fatigue signal when camera is actually streaming
+  if (r.blink === 0 && typeof camConnected !== 'undefined' && camConnected) return true;
+  return false;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -141,9 +162,31 @@ function checkCriticalEvent(r) {
 function recalculate() {
   const r = getReadings();
 
-  if (checkCriticalEvent(r) && !state.emergencyActive) {
-    triggerEmergency();
+  const criticalReason = checkCriticalEvent(r);
+
+  // Auto-reset the acknowledged flag once readings return to a safe range,
+  // so a genuine new critical event can fire again later.
+  if (state.emergencyAcknowledged && !criticalReason) {
+    state.emergencyAcknowledged = false;
+  }
+
+  if (criticalReason && !state.emergencyActive && !state.emergencyAcknowledged) {
+    // Critical takes priority — dismiss fatigue overlay if it was showing
+    if (state.fatigueWarningActive) dismissFatigueWarning();
+    triggerEmergency(criticalReason);
     return;
+  }
+
+  // Auto-reset the fatigue acknowledged flag once readings are safe again.
+  if (state.fatigueAcknowledged && !checkFatigueWarning(r)) {
+    state.fatigueAcknowledged = false;
+  }
+
+  // Fatigue warning (yellow) — only when not already in emergency mode
+  if (!state.emergencyActive && !state.fatigueAcknowledged) {
+    if (checkFatigueWarning(r) && !state.fatigueWarningActive) {
+      triggerFatigueWarning();
+    }
   }
 
   const risks = {
@@ -397,6 +440,9 @@ function updateAdaptations(dri, risks, r) {
   } else if (isImpaired) {
     tempVal.textContent = '18°C Alert Mode';
     if (tempInd) tempInd.className = 'adapt-indicator adapt-ind-alert';
+  } else if (sleepImpaired) {
+    tempVal.textContent = '26°C — Increasing Cabin Temperature';
+    if (tempInd) tempInd.className = 'adapt-indicator adapt-ind-alert';
   } else if (isReduced || logState === 'Reduced_yawn' || logState === 'Reduced_perclos') {
     tempVal.textContent = '20°C Alertness Mode';
     if (tempInd) tempInd.className = 'adapt-indicator adapt-ind-alert';
@@ -643,7 +689,7 @@ async function pollCameraMetrics() {
     // PERCLOS (eye aspect ratio / % eye closure)
     const perclosPct = data.perclos_pct ?? 0;
     const perclosRi  = rs.perclos ?? 0.1;
-    updateClmTile('clm-ear', 'clm-ear-bar', perclosPct.toFixed(1) + '%', perclosRi, riskColorFromRi(perclosRi));
+    updateClmTile('clm-ear', 'clm-ear-bar', perclosPct.toFixed(1) + '%', perclosPct / 100, riskColorFromRi(perclosRi));
 
     // Yawn Count
     const yawnCount = data.yawn_frequency ?? 0;
@@ -686,7 +732,7 @@ function startCameraPolling() {
 // Excellent ≥75, Good ≥75, Fair ≥50, Poor ≥25, Very Poor ≥10, Critical <10
 const PRESETS = {
   calm:     { hr: 60,  hrv: 60, sleep: 85,  perclos: 5,  blink: 15, yawn: 1,  visibility: 'clear',  traffic: 'low' },
-  tired:    { hr: 70,  hrv: 42, sleep: 55,  perclos: 15, blink: 20, yawn: 3,  visibility: 'clear',  traffic: 'low' },
+  tired:    { hr: 65,  hrv: 30, sleep: 45,  perclos: 44, blink: 16, yawn: 5,  visibility: 'clear',  traffic: 'low' },
   sleepy:   { hr: 65,  hrv: 32, sleep: 30,  perclos: 30, blink: 27, yawn: 7,  visibility: 'night',  traffic: 'low' },
   stress:   { hr: 90,  hrv: 22, sleep: 48,  perclos: 10, blink: 25, yawn: 0,  visibility: 'haze',   traffic: 'heavy' },
   critical: { hr: 100, hrv: 10, sleep: 8,   perclos: 50, blink: 40, yawn: 12, visibility: 'severe', traffic: 'gridlock' },
@@ -728,16 +774,175 @@ function setTraffic(val) {
 // ─────────────────────────────────────────────────────────────────────────────
 // EMERGENCY SYSTEM
 // ─────────────────────────────────────────────────────────────────────────────
-function triggerEmergency() {
+function triggerEmergency(reason) {
+  // If fatigue warning was showing, dismiss it cleanly first
+  if (state.fatigueWarningActive) dismissFatigueWarning();
   state.emergencyActive = true;
   document.getElementById('emergency-overlay').classList.remove('hidden');
+  const reasonEl = document.getElementById('emergency-trigger-reason');
+  if (reasonEl) reasonEl.textContent = reason || '—';
   startChime();
+
+  // Post a contextual AI log entry immediately (bypasses normal debounce)
+  // Pick the pool based on which critical condition fired
+  let critPool, critKey;
+  if (reason && reason.includes('0 BPM — No Signal')) {
+    critPool = AURA_MESSAGES.CriticalHR0;  critKey = 'CriticalHR0';
+  } else if (reason && reason.includes('Bradycardia')) {
+    critPool = AURA_MESSAGES.CriticalHRLow; critKey = 'CriticalHRLow';
+  } else if (reason && reason.includes('HRV = 0')) {
+    critPool = AURA_MESSAGES.CriticalHRV0;  critKey = 'CriticalHRV0';
+  } else {
+    critPool = AURA_MESSAGES.Critical;      critKey = 'Critical';
+  }
+  _auraPostMessage(critPool, critKey);
+  _auraLogLastState = critKey; // prevent the normal log from overwriting immediately
 }
 
 function dismissEmergency() {
   state.emergencyActive = false;
+  state.emergencyAcknowledged = true; // prevent immediate re-trigger while readings still critical
   document.getElementById('emergency-overlay').classList.add('hidden');
   stopChime();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FATIGUE WARNING SYSTEM
+// ─────────────────────────────────────────────────────────────────────────────
+function triggerFatigueWarning() {
+  state.fatigueWarningActive = true;
+  const overlay = document.getElementById('fatigue-overlay');
+  if (overlay) overlay.classList.remove('hidden');
+  startFatigueChime();
+}
+
+function dismissFatigueWarning() {
+  state.fatigueWarningActive = false;
+  state.fatigueAcknowledged = true; // prevent immediate re-trigger while readings still elevated
+  const overlay = document.getElementById('fatigue-overlay');
+  if (overlay) overlay.classList.add('hidden');
+  stopFatigueChime();
+}
+
+// Vibraphone-style fatigue chime — same physical model as the emergency chime
+// but significantly softer and calmer:
+//   • Master gain capped at 0.18 (vs 0.30–0.75 for emergency)
+//   • No volume escalation across repeats
+//   • Shorter 4-beat phrase with a longer silence gap (every 6 s)
+//   • Identical signal chain: vibraphone partials → lowpass → plate reverb → limiter
+function startFatigueChime() {
+  stopFatigueChime();
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    state.fatigueChimeAudioCtx = ctx;
+
+    // ── Master gain (softer than emergency: 0.18 peak vs 0.30) ───────────
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0, ctx.currentTime);
+    masterGain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.1);
+    masterGain.connect(ctx.destination);
+    state.fatigueChimeGainNode = masterGain;
+
+    // ── Limiter ───────────────────────────────────────────────────────────
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = -4;
+    limiter.knee.value = 2;
+    limiter.ratio.value = 12;
+    limiter.attack.value  = 0.001;
+    limiter.release.value = 0.15;
+    limiter.connect(masterGain);
+
+    // ── Plate reverb (same topology as emergency) ─────────────────────────
+    const wet = ctx.createGain(); wet.gain.value = 0.30;
+    const dry = ctx.createGain(); dry.gain.value = 0.70;
+    wet.connect(limiter); dry.connect(limiter);
+    const ap1 = ctx.createBiquadFilter(); ap1.type = 'allpass'; ap1.frequency.value = 340;
+    const ap2 = ctx.createBiquadFilter(); ap2.type = 'allpass'; ap2.frequency.value = 980;
+    const d1 = ctx.createDelay(0.2); d1.delayTime.value = 0.031;
+    const d2 = ctx.createDelay(0.2); d2.delayTime.value = 0.047;
+    const f1 = ctx.createGain(); f1.gain.value = 0.18;
+    const f2 = ctx.createGain(); f2.gain.value = 0.16;
+    const reverbInput = ctx.createGain();
+    reverbInput.connect(ap1); ap1.connect(d1); d1.connect(f1); f1.connect(d1);
+    reverbInput.connect(ap2); ap2.connect(d2); d2.connect(f2); f2.connect(d2);
+    d1.connect(wet); d2.connect(wet);
+    reverbInput.connect(dry);
+
+    // ── 7.2 kHz warmth filter ─────────────────────────────────────────────
+    const warmth = ctx.createBiquadFilter();
+    warmth.type = 'lowpass'; warmth.frequency.value = 7200; warmth.Q.value = 0.5;
+    warmth.connect(reverbInput);
+
+    // ── Same 4-partial vibraphone model as emergency chime ────────────────
+    const VIBE_PARTIALS = [
+      [1.000, 1.00, 2.40],
+      [3.756, 0.16, 0.19],
+      [9.160, 0.04, 0.038],
+      [2.010, 0.09, 1.75],
+    ];
+    const PEAK = 0.18; // fixed — no escalation
+
+    function strikeNote(freq, t) {
+      VIBE_PARTIALS.forEach(([ratio, relGain, decay]) => {
+        const osc = ctx.createOscillator();
+        const env = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq * ratio, t);
+        const atk = 0.004;
+        const s1  = t + atk + Math.min(0.06, decay * 0.25);
+        env.gain.setValueAtTime(0, t);
+        env.gain.linearRampToValueAtTime(PEAK * relGain, t + atk);
+        env.gain.setValueAtTime(PEAK * relGain, s1);
+        env.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+        osc.connect(env); env.connect(warmth);
+        osc.start(t); osc.stop(t + decay + 0.05);
+      });
+    }
+
+    function strikeBeat(t) {
+      strikeNote(440.00, t);          // A4 root
+      strikeNote(659.25, t, 0.78);    // E5 fifth
+    }
+
+    // 4-beat phrase: DENG · DENG · DENG DENG (shorter & calmer than 8-beat emergency)
+    const BEATS      = [0.00, 0.60, 1.20, 1.50];
+    const PHRASE_LEN = 1.50 + 2.4 + 3.5; // onset + decay + silence gap
+
+    function schedulePhrase(startT) {
+      if (!state.fatigueWarningActive) return;
+      BEATS.forEach(offset => strikeBeat(startT + offset));
+      const nextStart = startT + PHRASE_LEN;
+      const delayMs   = Math.max(0, (nextStart - ctx.currentTime) * 1000 - 25);
+      state.fatigueChimeInterval = setTimeout(() => schedulePhrase(nextStart), delayMs);
+    }
+
+    schedulePhrase(ctx.currentTime + 0.12);
+
+  } catch (e) {
+    console.warn('[AURA] Fatigue chime unavailable:', e);
+  }
+}
+
+function stopFatigueChime() {
+  if (state.fatigueChimeInterval) {
+    clearTimeout(state.fatigueChimeInterval);
+    clearInterval(state.fatigueChimeInterval);
+    state.fatigueChimeInterval = null;
+  }
+  if (state.fatigueChimeAudioCtx) {
+    if (state.fatigueChimeGainNode) {
+      try {
+        state.fatigueChimeGainNode.gain.linearRampToValueAtTime(
+          0, state.fatigueChimeAudioCtx.currentTime + 0.6
+        );
+      } catch (_) {}
+    }
+    setTimeout(() => {
+      try { if (state.fatigueChimeAudioCtx) state.fatigueChimeAudioCtx.close(); } catch (_) {}
+      state.fatigueChimeAudioCtx = null;
+      state.fatigueChimeGainNode = null;
+    }, 680);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -989,7 +1194,7 @@ const AURA_MESSAGES = {
   ],
   Reduced_yawn: [
     { icon: '🟡', cls: 'aura-msg-reduced',
-      text: '<strong>Frequent yawning detected.</strong> Increasing cabin airflow sensitivity and <em>suggesting a rest stop in 5 kilometres</em>. Collision warning escalated to +1s early.' },
+      text: '<strong>Frequent yawning detected.</strong> Increasing cabin airflow sensitivity and <em>suggesting a rest stop in 5 kilometres</em>. Collision warning escalated to High Alert +2s early.' },
   ],
   Reduced_perclos: [
     { icon: '🟡', cls: 'aura-msg-reduced',
@@ -1019,6 +1224,24 @@ const AURA_MESSAGES = {
     { icon: '🔴', cls: 'aura-msg-critical',
       text: '<strong>Critical fatigue threshold exceeded.</strong> All safety systems at MAXIMUM. SOS signal broadcasting. Initiating controlled stop sequence.' },
   ],
+  CriticalHR0: [
+    { icon: '🔴', cls: 'aura-msg-critical',
+      text: '<strong>CRITICAL: Heart rate signal lost (0 BPM).</strong> No cardiac signal detected from wearable sensor. Mercedes Emergency Call System activated. <em>Active Brake Assist armed — vehicle preparing controlled stop.</em>' },
+    { icon: '🔴', cls: 'aura-msg-critical',
+      text: '<strong>CRITICAL: Cardiac monitoring failure.</strong> Heart rate reading dropped to zero — possible sensor detachment or medical emergency. SOS broadcast initiated. <em>Hazard lights activated. Emergency services alerted.</em>' },
+  ],
+  CriticalHRLow: [
+    { icon: '🔴', cls: 'aura-msg-critical',
+      text: '<strong>CRITICAL: Dangerous Bradycardia detected.</strong> Heart rate has fallen below 20 BPM — severe cardiac event possible. Mercedes Emergency Call System activated. <em>Lane Keep Assist in AUTO STEER pull-over mode. SOS broadcasting.</em>' },
+    { icon: '🔴', cls: 'aura-msg-critical',
+      text: '<strong>CRITICAL: Extremely low heart rate.</strong> HR below safe operating threshold. All vehicle safety systems escalated to MAXIMUM. <em>Emergency services notified. Vehicle executing controlled stop sequence.</em>' },
+  ],
+  CriticalHRV0: [
+    { icon: '🔴', cls: 'aura-msg-critical',
+      text: '<strong>CRITICAL: HRV signal lost (0 ms).</strong> Heart Rate Variability dropped to zero — potential cardiac arrest or sensor failure. Mercedes Emergency Call System activated. <em>Active Brake Assist armed. Hazard lights on.</em>' },
+    { icon: '🔴', cls: 'aura-msg-critical',
+      text: '<strong>CRITICAL: No HRV signal detected.</strong> Autonomic cardiac regulation appears absent. Escalating all safety interventions to maximum level. <em>SOS signal broadcasting. Emergency services alerted.</em>' },
+  ],
   LowHR: [
     { icon: '🟠', cls: 'aura-msg-impaired',
       text: '<strong>Abnormally low heart rate detected.</strong> HR is below 50 BPM — potential bradycardia. Monitoring closely. <em>Please ensure you are feeling well, Khye Vern.</em>' },
@@ -1036,6 +1259,12 @@ const AURA_MESSAGES = {
       text: '<strong>Abnormal HRV detected.</strong> Heart Rate Variability is critically suppressed (1–14 ms range), indicating high physiological stress or fatigue. <em>Cabin environment adjusted for recovery.</em>' },
     { icon: '🟡', cls: 'aura-msg-reduced',
       text: '<strong>Abnormal HRV detected.</strong> Very low HRV suggests autonomic imbalance. Calm music and climate optimisation engaged. <em>Please consider a short rest, Khye Vern.</em>' },
+  ],
+  CriticalFatigue: [
+    { icon: '🔴', cls: 'aura-msg-critical',
+      text: '<strong>CRITICAL STATE DETECTED.</strong> Multiple systems activated: — <strong>Music:</strong> Alert tone playing — <strong>Seat:</strong> Fatigue vibration alert engaged — <strong>Climate:</strong> Cabin cooled to 18°C (alert mode) — <strong>Collision Warning:</strong> MAXIMUM, pre-brake armed — <strong>Lane Keep:</strong> AUTO STEER pull-over mode active — <strong>SOS:</strong> Continuous broadcast initiated. <em>Please respond or the vehicle will pull over safely.</em>' },
+    { icon: '🔴', cls: 'aura-msg-critical',
+      text: '<strong>All AURA safety systems escalated to MAXIMUM.</strong> Biometrics confirm severe impairment — HR: elevated, HRV: critically suppressed, PERCLOS: high, Sleep quality: critical. <strong>Seat vibration + alert tone active. Climate at 18°C.</strong> Lane Keep Assist steering vehicle toward hard shoulder. <em>SOS signal broadcasting to emergency services.</em>' },
   ],
 };
 
@@ -1059,8 +1288,24 @@ function _isLowHRVState(r) {
   return r.hrv >= 1 && r.hrv <= 14;
 }
 
+// Detect critical fatigue: DRI is in Critical band AND at least two fatigue signals are severe.
+// This takes highest routing priority so it overrides LowHRV, HighHR, etc.
+function _isCriticalFatigueState(cssState, r) {
+  if (cssState !== 'Critical') return false;
+  // Count how many fatigue signals are in the danger zone
+  const signals = [
+    r.hrv <= 20,          // suppressed HRV
+    r.perclos >= 40,     // high eye closure
+    r.sleep <= 25,       // poor or critical sleep
+    r.yawn >= 6,         // frequent yawning
+    r.blink > 25,        // abnormally high blink
+  ];
+  return signals.filter(Boolean).length >= 2;
+}
+
 // Pick which message pool to draw from
 function _auraPickPool(cssState, r) {
+  if (_isCriticalFatigueState(cssState, r)) return AURA_MESSAGES.CriticalFatigue;
   if (_isLowHRState(r))  return AURA_MESSAGES.LowHR;
   if (_isHighHRState(r)) return AURA_MESSAGES.HighHR;
   if (_isLowHRVState(r)) return AURA_MESSAGES.LowHRV;
@@ -1074,6 +1319,7 @@ function _auraPickPool(cssState, r) {
 }
 
 function _auraCompositeKey(cssState, r) {
+  if (_isCriticalFatigueState(cssState, r)) return 'CriticalFatigue';
   if (_isLowHRState(r))  return 'LowHR';
   if (_isHighHRState(r)) return 'HighHR';
   if (_isLowHRVState(r)) return 'LowHRV';

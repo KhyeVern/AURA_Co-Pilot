@@ -33,8 +33,9 @@
         </svg>
       </div>
       <h1 id="emergency-title" class="emergency-title">CRITICAL EVENT</h1>
-      <p class="emergency-subtitle">SYSTEM INTERVENTION INITIATED</p>
+      <p class="emergency-subtitle">MERCEDES EMERGENCY CALL SYSTEM INITIATED</p>
       <div class="emergency-divider"></div>
+
       <p class="emergency-body">
         The vehicle will safely pull over to the side of the road and<br />
         immediately contact <strong>emergency services and authorities.</strong>
@@ -46,7 +47,7 @@
         </div>
         <div class="e-status-item">
           <span class="e-status-dot active"></span>
-          <span>Emergency Brake Assist Armed</span>
+          <span>Active Brake Assist Armed</span>
         </div>
         <div class="e-status-item">
           <span class="e-status-dot active"></span>
@@ -62,12 +63,58 @@
     </div>
   </div>
 
+  <!-- ── FATIGUE WARNING OVERLAY ───────────────────────────────────────────── -->
+  <div id="fatigue-overlay" class="fatigue-overlay hidden" role="alertdialog" aria-modal="true"
+    aria-labelledby="fatigue-title">
+    <div class="fatigue-inner">
+      <div class="fatigue-pulse-rings">
+        <div class="fatigue-ring r1"></div>
+        <div class="fatigue-ring r2"></div>
+        <div class="fatigue-ring r3"></div>
+      </div>
+      <div class="fatigue-icon">
+        <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="40" cy="40" r="38" stroke="#ffca28" stroke-width="3" />
+          <path d="M40 20v24M40 56v4" stroke="#ffca28" stroke-width="5" stroke-linecap="round" />
+          <circle cx="40" cy="64" r="3" fill="#ffca28" />
+        </svg>
+      </div>
+      <h2 id="fatigue-title" class="fatigue-title">FATIGUE ALERT</h2>
+      <p class="fatigue-subtitle">DRIVER ATTENTION REQUIRED</p>
+      <div class="fatigue-divider"></div>
+      <p class="fatigue-body">
+        <strong>Severe fatigue detected.</strong><br />
+        Please pull over to take a break.
+      </p>
+      <div class="fatigue-status-row">
+        <div class="f-status-item">
+          <span class="f-status-dot"></span>
+          <span>Active Lane Keep Assist — Maximum Correction Active</span>
+        </div>
+        <div class="f-status-item">
+          <span class="f-status-dot"></span>
+          <span>ENERGIZING Seat Kinetics Activated — Relief Driver Fatigue</span>
+        </div>
+        <div class="f-status-item">
+          <span class="f-status-dot"></span>
+          <span>Rest Stop Navigation — Calculating Route</span>
+        </div>
+      </div>
+      <button id="btn-dismiss-fatigue" class="btn-dismiss-fatigue" onclick="dismissFatigueWarning()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 13l4 4L19 7" />
+        </svg>
+        I'm notified
+      </button>
+    </div>
+  </div>
+
   <!-- ── TOP HEADER ─────────────────────────────────────────────────────────── -->
   <header class="top-header">
     <div class="header-left">
       <div class="logo-star">
         <img id="logo-img"
-          src="https://i.postimg.cc/VN6RVHjM/Mercedes-AURA-Logo.png"
+          src="https://i.postimg.cc/4N7d5x6k/Mercedes-AURA-Logo.png"
           alt="Mercedes AURA Co-Pilot Logo"
           style="height:48px;width:auto;object-fit:contain;display:block;" />
       </div>
@@ -685,7 +732,7 @@
                 oninput="syncNum('perclos', this.value); recalculate()" />
               <div class="bio-slider-track-fill" id="perclos-track-fill"></div>
               <div class="slider-labels">
-                <span>0%</span><span>10%</span><span>20%</span><span>40%</span><span>100%</span>
+                <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
               </div>
             </div>
           </div>

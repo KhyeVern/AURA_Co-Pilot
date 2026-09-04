@@ -1829,6 +1829,37 @@ body {
   background: rgba(255, 45, 85, 0.3);
 }
 
+.emergency-trigger-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 20px;
+  background: rgba(255, 45, 85, 0.08);
+  border: 1px solid rgba(255, 45, 85, 0.25);
+  border-radius: 10px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.emergency-trigger-label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: rgba(255, 45, 85, 0.6);
+}
+
+.emergency-trigger-value {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #ff6b85;
+  text-shadow: 0 0 12px rgba(255, 45, 85, 0.5);
+}
+
+
 .emergency-body {
   font-size: 15px;
   line-height: 1.8;
@@ -1894,6 +1925,178 @@ body {
 }
 
 .btn-dismiss svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── FATIGUE WARNING OVERLAY ── */
+.fatigue-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0, 0, 0, 0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  animation: fatigue-in 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fatigue-in {
+  from { opacity: 0; transform: scale(1.04); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.fatigue-overlay.hidden {
+  display: none;
+}
+
+.fatigue-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  max-width: 560px;
+  padding: 48px 40px;
+  text-align: center;
+  border: 1px solid rgba(255, 202, 40, 0.35);
+  border-radius: 24px;
+  background: rgba(10, 8, 0, 0.96);
+  box-shadow: 0 0 60px rgba(255, 202, 40, 0.18), inset 0 0 40px rgba(255, 202, 40, 0.05);
+  z-index: 1;
+}
+
+.fatigue-pulse-rings {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 24px;
+  overflow: visible;
+}
+
+.fatigue-ring {
+  position: absolute;
+  inset: -30px;
+  border: 2px solid rgba(255, 202, 40, 0.3);
+  border-radius: 32px;
+  animation: pulse-fatigue 2.4s ease-out infinite;
+}
+
+.fatigue-ring.r2 { animation-delay: 0.7s; }
+.fatigue-ring.r3 { animation-delay: 1.4s; }
+
+@keyframes pulse-fatigue {
+  0%   { transform: scale(1);    opacity: 0.8; }
+  100% { transform: scale(1.08); opacity: 0;   }
+}
+
+.fatigue-icon svg {
+  width: 80px;
+  height: 80px;
+  animation: fatigue-icon-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes fatigue-icon-pulse {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 202, 40, 0.55)); }
+  50%       { filter: drop-shadow(0 0 22px rgba(255, 202, 40, 1));   }
+}
+
+.fatigue-title {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #ffca28;
+  text-shadow: 0 0 20px rgba(255, 202, 40, 0.75);
+  animation: fatigue-title-flash 1s ease-in-out infinite;
+}
+
+@keyframes fatigue-title-flash {
+  0%, 100% { opacity: 1;   }
+  50%       { opacity: 0.72; }
+}
+
+.fatigue-subtitle {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: rgba(255, 202, 40, 0.65);
+  margin-top: -10px;
+}
+
+.fatigue-divider {
+  width: 80px;
+  height: 1px;
+  background: rgba(255, 202, 40, 0.3);
+}
+
+.fatigue-body {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  max-width: 420px;
+}
+
+.fatigue-body strong {
+  color: #ffca28;
+}
+
+.fatigue-status-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+}
+
+.f-status-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: rgba(255, 202, 40, 0.06);
+  border: 1px solid rgba(255, 202, 40, 0.15);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.f-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffca28;
+  animation: blink-alert 0.9s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.btn-dismiss-fatigue {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 32px;
+  background: rgba(255, 202, 40, 0.12);
+  border: 2px solid #ffca28;
+  border-radius: 12px;
+  color: #ffca28;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all var(--transition-smooth);
+}
+
+.btn-dismiss-fatigue:hover {
+  background: rgba(255, 202, 40, 0.22);
+  box-shadow: 0 0 20px rgba(255, 202, 40, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-dismiss-fatigue svg {
   width: 18px;
   height: 18px;
 }

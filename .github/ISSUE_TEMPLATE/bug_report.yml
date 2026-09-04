@@ -1,0 +1,62 @@
+name: 🐛 Bug Report
+description: Create a report to help us reproduce and fix a bug in AURA Co-Pilot
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue! Please fill out the sections below to help us resolve it quickly.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Describe the issue...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected Component
+      description: Which part of AURA Co-Pilot is affected?
+      options:
+        - Web Dashboard (index.html / app.js / style.css)
+        - In-Browser FaceLandmarker (face_tracker.js)
+        - Python CV Tracker Backend (aura_camera_tracker.py)
+        - DRI Fusion Math Algorithm
+        - Emergency / Fatigue Warning Overlay
+        - Documentation / Repository
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Start dashboard via ...
+        2. Adjust slider / preset to ...
+        3. Observe issue ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment & Browser Details
+      description: OS (Windows / macOS / Linux), Browser (Chrome / Edge / Firefox), Python version.
+      placeholder: Windows 11, Chrome 120, Python 3.10
+    validations:
+      required: false

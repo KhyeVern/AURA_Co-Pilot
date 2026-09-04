@@ -1,0 +1,34 @@
+{
+  "name": "aura-co-pilot",
+  "version": "3.0.0",
+  "description": "Mercedes AURA Co-Pilot — Adaptive Understanding & Responsive AI driver readiness dashboard",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve . -p 8080",
+    "serve": "npx serve . -p 8080",
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KhyeVern/AURA_Co-Pilot.git"
+  },
+  "keywords": [
+    "mercedes-benz",
+    "aura",
+    "co-pilot",
+    "driver-readiness-index",
+    "computer-vision",
+    "mediapipe",
+    "opencv",
+    "dashboard"
+  ],
+  "author": "Ng Khye Vern",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/KhyeVern/AURA_Co-Pilot/issues"
+  },
+  "homepage": "https://github.com/KhyeVern/AURA_Co-Pilot#readme",
+  "devDependencies": {
+    "serve": "^14.2.1"
+  }
+}

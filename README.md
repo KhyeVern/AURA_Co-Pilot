@@ -1,249 +1,173 @@
 # Mercedes AURA Co-Pilot
 
-> **Adaptive Understanding & Responsive AI** — An intelligent driver readiness dashboard that fuses real-time computer vision, biometric telemetry, and environmental data to compute a live Driver Readiness Index (DRI) and trigger proactive cabin adaptations.
+[![License: MIT](https://img.shields.io/badge/License-MIT-gold.svg)](LICENSE)
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6%2B-yellow.svg)](app.js)
+[![OpenCV & MediaPipe](https://img.shields.io/badge/Vision-OpenCV%20%2B%20MediaPipe-green.svg)](aura_camera_tracker.py)
+[![Build Status](https://github.com/KhyeVern/AURA_Co-Pilot/actions/workflows/ci.yml/badge.svg)](https://github.com/KhyeVern/AURA_Co-Pilot/actions/workflows/ci.yml)
+
+> **Adaptive Understanding & Responsive AI** — An intelligent driver readiness dashboard that fuses real-time computer vision, biometric telemetry, and environmental data to compute a live **Driver Readiness Index (DRI)** and trigger proactive cabin adaptations.
 
 ---
 
-## What AURA Stands For
+## 🌟 Overview
 
-| Letter | Meaning |
-|--------|---------|
-| **A** | **Adaptive** — Dynamically modifies safety sensor sensitivity, alert thresholds, and cabin comfort profiles to match both the driver's current physical condition and the immediate external environment. |
-| **U** | **Understanding** — Aggregates multimodal biometric streams to map out a clear, contextual digital footprint of the driver's active state. |
-| **R** | **Responsive** — Instantly deploys automated physical, visual, and mechanical interventions the moment a critical risk threshold is crossed. |
-| **A** | **AI** — Utilizes smart contextual logic and computer vision to continuously evaluate risks without relying on rigid, easily fooled alert timers. |
+**AURA Co-Pilot** is a full-stack automotive safety system prototype designed for next-generation intelligent vehicles. By combining high-frequency facial tracking with biometric metrics (heart rate, heart rate variability RMSSD, sleep quality score), AURA continuously evaluates driver fatigue, drowsiness, and cognitive stress to ensure optimal cabin intervention and emergency safety response.
+
+![AURA Logo](AURA%20Logo.png)
 
 ---
 
-## System Overview
+## 📐 What AURA Stands For
 
-AURA Co-Pilot is a **full-stack prototype** consisting of:
-
-1. **`index.html` + `style.css`** — Premium dark-mode web dashboard (Driver Readiness Dashboard)
-2. **`app.js`** — Core DRI algorithm, risk calculations, emergency system, and UI logic
-3. **`face_tracker.js`** — In-browser MediaPipe FaceLandmarker integration (webcam feed + wireframe overlay)
-4. **`aura_camera_tracker.py`** — Python computer vision backend (OpenCV + MediaPipe) with a local HTTP server that streams live facial metrics to the dashboard
+| Letter | Meaning | Core Function |
+| :---: | :--- | :--- |
+| **A** | **Adaptive** | Dynamically adapts cabin parameters to driver cognitive state |
+| **U** | **Understanding** | Interprets facial landmarks, eye closures, and biometric telemetry |
+| **R** | **Responsive** | Instantly executes ambient, thermal, and emergency safety interventions |
+| **A** | **AI** | Powers real-time oculomotor calculation & Driver Readiness Index (DRI) |
 
 ---
 
-## 4-Tier Architecture
+## 🏗️ 4-Tier Architecture
 
-### 1. 👁️ Perceive
-Multi-modal data ingestion layer with two sub-components:
-
-- **Behavioural Tracking (Camera)**
-  - Live webcam feed via `getUserMedia` + MediaPipe FaceLandmarker (in-browser)
-  - Python backend (`aura_camera_tracker.py`) using OpenCV + MediaPipe Face Mesh
-  - Measures: **Eye Aspect Ratio (EAR)**, **PERCLOS** (% eye closure over 1 min), **Blink Rate** (blinks/min), **Mouth Aspect Ratio (MAR)**, **Yawn Frequency** (per 10 min)
-
-- **Biometric / Telemetry Simulation**
-  - Interactive sliders for: Heart Rate (BPM), HRV (RMSSD in ms), Sleep Quality (range 0–100 score)
-  - Environmental toggles: Weather / Visibility, Traffic Conditions
-  - Quick Preset States: Calm, Tired, Sleepy, Stressed, Critical Fatigue
-
-### 2. 🧠 Understand
-State aggregation layer that collects all sensor inputs and assembles a structured, time-stamped driver-environment profile fed into the DRI engine.
-
-### 3. ⚖️ Decide
-Core analytics engine — the **Driver Readiness Index (DRI)**:
-
-| Input Signal | Weight |
-|---|---|
-| PERCLOS (eye closure %) | **25%** |
-| HRV — RMSSD (ms) | **20%** |
-| Heart Rate (BPM) | **15%** |
-| Blink Frequency (blinks/min) | **15%** |
-| Sleep Quality (score 0–100) | **10%** |
-| Yawn Frequency (per 10 min) | **5%** |
-| Weather / Visibility | **5%** |
-| Traffic Conditions | **5%** |
-
-**Sleep Quality Risk Mapping:**
-
-| Score Range | Category | Risk (Rᵢ) |
-|---|---|---|
-| 75 – 100 | 🟢 Excellent / Good | 0.1 |
-| 50 – 74 | 🟡 Fair | 0.3 |
-| 25 – 49 | 🟠 Poor | 0.5 |
-| 10 – 24 | 🔴 Very Poor | 0.7 |
-| 0 – 9 | ⛔ Critical | 0.9 |
-
-**DRI Formula:**
 ```
-Total Risk = Σ (weight_i × R_i)       // each R_i ∈ {0.1, 0.3, 0.5, 0.7, 0.9}
-DRI Score  = (1 − Total Risk) × 100
+                                  AURA SYSTEM PIPELINE
+ ┌─────────────────┐     ┌─────────────────────┐     ┌────────────────────┐     ┌───────────────────┐
+ │   1. PERCEIVE   │ ──> │    2. UNDERSTAND    │ ──> │     3. DECIDE      │ ──> │      4. ACT       │
+ └─────────────────┘     └─────────────────────┘     └────────────────────┘     └───────────────────┘
+   • Oculomotor CV         • Sensor Aggregation        • Weighted DRI Math        • Cabin Climate
+   • Biometrics (HR/HRV)   • Temporal Smoothing        • Risk Classification      • Ambient Lighting
+   • Sleep Quality Score   • Context Fusion            • Readiness Bands          • Safety Escalation
+   • Weather & Traffic                                 • Emergency Triggers       • Emergency Overlay
 ```
 
-**DRI Readiness Bands:**
-| DRI Range | Status | Meaning |
-|---|---|---|
-| 81 – 100 | 🟢 **OPTIMAL** | Driver is fully alert |
-| 61 – 80 | 🟩 **ACCEPTABLE** | Mild fatigue signals |
-| 41 – 60 | 🟡 **REDUCED** | Moderate impairment |
-| 21 – 40 | 🟠 **IMPAIRED** | High risk — interventions active |
-| 0 – 20 | 🔴 **CRITICAL** | Emergency system triggered |
+### 1. 👁️ Perceive (Multi-Modal Data Ingestion)
+- **Computer Vision Pipeline (`aura_camera_tracker.py` & `face_tracker.js`):**
+  - Live webcam feed via MediaPipe 468-point Face Mesh landmark tracking.
+  - Oculomotor tracking: **Eye Aspect Ratio (EAR)**, **PERCLOS** (% eye closure over 1 min), **Blink Frequency** (blinks/min), **Mouth Aspect Ratio (MAR)**, **Yawn Frequency** (per 10 min).
+- **Biometric & Environmental Simulation:**
+  - Interactive telemetry sliders: Heart Rate (BPM), HRV RMSSD (ms), Sleep Quality (Apple Watch 0–100 score).
+  - Environmental controls: Weather visibility, Traffic density.
+  - Preset quick-states: *Calm*, *Tired*, *Sleepy*, *Stressed*, *Critical Fatigue*.
 
-### 4. ⚡ Act
-Execution layer — real-time cabin adaptations dispatched based on DRI state and biometric inputs:
+### 2. 🧠 Understand (State Aggregation & Context Fusion)
+- Aggregates multi-modal telemetry into a time-stamped driver state matrix.
+- Applies sliding-window temporal smoothing across PERCLOS and blink metrics to eliminate sensor noise.
 
-| Adaptation | Calm (Optimal) | Poor Sleep (score < 50) | Stressed | Fatigued/Impaired | Critical |
-|---|---|---|---|---|---|
-| **Ambient Music** | Driver Preference | Upbeat — Low Sleep Alert | Calm Music Activated | Alert Tone | Alert Tone |
-| **Seat Massage** | — | 💆 Seat Massage On | Massage + Violet Ambient Light | Gentle Seat Pulse | Fatigue Vibration Alert |
-| **Climate Control** | 22°C Nominal | 22°C Nominal | 20°C Cooling | 20°C Alertness Mode | 18°C Alert Mode |
-| **Collision Warning** | Standard | High Alert +2s Early | Enhanced +1s Early | High Alert +2s Early | MAXIMUM — Pre-Brake Active |
-| **Lane Keep Assist** | Active | Aggressive Correction | Enhanced Correction | Aggressive Correction | AUTO STEER — Pull Over Mode |
-| **Alert Aggressiveness** | Normal | High — Haptic + Audio | Medium — Audio Only | High — Haptic + Audio | MAX — Continuous SOS |
+### 3. ⚖️ Decide (Driver Readiness Index Engine)
+The **Driver Readiness Index (DRI)** maps multi-source risk inputs (\(R_i \in \{0.1, 0.3, 0.5, 0.7, 0.9\}\)) to a total risk score via weighted summation:
 
-> **Sleep Safety Escalation:** When sleep quality drops to **Poor (< 50) or below**, all safety sensors are immediately enhanced regardless of DRI level — Collision Warning escalates to High Alert +2s, LKA to Aggressive Correction, Alerts to Haptic + Audio, and Seat Massage activates automatically.
+$$\text{Total Risk} = \sum (w_i \times R_i)$$
+$$\text{DRI Score} = (1 - \text{Total Risk}) \times 100$$
 
----
+#### Signal Weight Allocation Matrix
 
-## Emergency System
+| Signal Input | Weight (\(w_i\)) | Low Risk (0.1) | Moderate (0.3) | High Risk (0.7) | Critical Risk (0.9) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **PERCLOS (1-min)** | **25%** | < 10% | 10% – 20% | 20% – 40% | > 40% |
+| **HRV RMSSD (ms)** | **20%** | > 42 ms | 30 – 42 ms | 18 – 30 ms | < 18 ms |
+| **Heart Rate (BPM)**| **15%** | 60 – 80 BPM | 80 – 95 BPM | 95 – 110 BPM | > 110 BPM |
+| **Blink Frequency** | **15%** | 12 – 20 /min | 20 – 28 /min | 28 – 35 /min | > 35 /min |
+| **Sleep Quality**   | **10%** | 75 – 100 | 50 – 74 | 25 – 49 | < 25 |
+| **Yawn Frequency**  | **5%**  | < 2 /10min | 2 – 4 /10min | 4 – 6 /10min | > 6 /10min |
+| **Weather / Visibility**| **5%**| Clear | Overcast | Rain / Fog | Heavy Storm |
+| **Traffic Conditions** | **5%**| Light | Moderate | Heavy | Congested |
 
-When `DRI ≤ 20` or a critical biometric event is detected (HR = 0, HRV = 0, PERCLOS > 95%), the **Critical Event Overlay** is triggered:
-
-- 🚨 Hazard Lights Activated
-- 🛑 Emergency Brake Assist Armed
-- 📡 SOS Signal Broadcasting
-- Acoustic vibraphone chime alert (physical model with A4 + E5 perfect fifth chord)
-
----
-
-## Preset Driver States
-
-| Preset | HR (BPM) | HRV (ms) | Sleep Quality | PERCLOS | Expected DRI |
-|---|---|---|---|---|---|
-| 😌 **Calm** | 60 | 60 | 85 (Good) | 5% | ~90 |
-| 😪 **Tired** | 70 | 42 | 55 (Fair) | 15% | ~65 |
-| 😴 **Sleepy** | 65 | 32 | 30 (Poor) | 30% | ~45 |
-| 😤 **Stress** | 90 | 22 | 48 (Poor) | 10% | ~50 |
-| 🚨 **Critical** | 100 | 10 | 8 (Critical) | 50% | ~15 |
-
-> **Note:** The Critical preset uses **100 BPM** as the heart rate threshold. Sleep quality at Poor level (< 50) in Sleepy and Stress presets triggers automatic safety escalation.
+#### DRI Readiness Bands
+| DRI Score | Readiness Band | System State | Recommended Action |
+| :---: | :---: | :--- | :--- |
+| **81 – 100** | 🟢 **OPTIMAL** | Full Driver Readiness | Standard driving mode |
+| **61 – 80**  | 🟩 **ACCEPTABLE**| Mild Fatigue Detected | Gentle ambient adjustment |
+| **41 – 60**  | 🟡 **REDUCED** | Moderate Impairment | Activate seat kinetics & cooling |
+| **21 – 40**  | 🟠 **IMPAIRED**| High Risk | Haptic alerts & aggressive LKA |
+| **0 – 20**   | 🔴 **CRITICAL**| Emergency State | Pre-brake, pull-over assist, SOS |
 
 ---
 
-## Computer Vision Pipeline (`aura_camera_tracker.py`)
+### 4. ⚡ Act (Cabin Adaptations & Safety Escalation)
 
-A unified Python CV pipeline that runs as a local HTTP server at `http://127.0.0.1:5050/metrics`:
-
-| Module | Description |
-|---|---|
-| **Live Webcam Feed** | OpenCV capture @ 30 fps |
-| **Landmark Overlay** | MediaPipe Face Mesh — eye + mouth contour polylines |
-| **Oculomotor Metrics** | PERCLOS (1-min rolling), Blink Hz (1-min), Yawn (10-min) |
-| **Fusion Math Engine** | Weighted Rᵢ → Total Risk → DRI % |
-| **Real-Time HUD** | Semi-transparent cv2.putText overlay on the video window |
-| **Safe Mock Fallback** | Animated synthetic face skeleton if no camera is found |
-
-The Python backend supports two MediaPipe APIs:
-- **Tasks API (≥ v0.10)** — auto-downloads `face_landmarker.task` model
-- **Legacy Solutions API (v0.9.x)** — fallback
+| Adaptation System | Optimal (81–100) | Poor Sleep (<50) | Stressed | Impaired (21–40) | Critical (0–20) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Ambient Music** | User Preference | Upbeat Alert Tone | Calming Acoustics | Alert Pulse Tone | Continuous SOS Siren |
+| **Seat Massage** | Off | 💆 Seat Massage On | Massage + Violet Light | Haptic Vibration Pulse | Continuous Alert Pulse |
+| **Climate Control** | 22°C Nominal | 22°C Nominal | 20°C Cooling | 20°C Alertness Flow | 18°C Alert Airflow |
+| **Collision Warning**| Standard | High Alert (+2s) | Enhanced (+1s) | High Alert (+2s) | MAXIMUM (Pre-Brake) |
+| **Lane Keep Assist** | Active | Aggressive Correction| Enhanced Correction | Aggressive Correction | AUTO STEER (Pull Over) |
+| **Alert Intensity** | Standard | High (Haptic + Audio)| Medium (Audio Only) | High (Haptic + Audio) | MAX (Full Overlay + SOS) |
 
 ---
 
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| **Frontend Structure** | HTML5 (Semantic) |
-| **Frontend Styling** | Vanilla CSS (dark-mode, glassmorphism, CSS animations) |
-| **Frontend Logic** | Vanilla JavaScript (ES6+, Web Audio API) |
-| **In-Browser CV** | MediaPipe Tasks Vision (`@mediapipe/tasks-vision@0.10.14`) |
-| **Python Backend** | Python 3.10+ |
-| **Computer Vision** | OpenCV (`opencv-python`), MediaPipe (`mediapipe`) |
-| **Numerical** | NumPy |
-| **Fonts** | Google Fonts — Inter + Orbitron |
-
----
-
-## Getting Started
-
-### Prerequisites
-
-```bash
-# Python dependencies
-pip install opencv-python mediapipe numpy
-```
-
-### Running the Python Camera Tracker
-
-```bash
-python aura_camera_tracker.py
-```
-
-- Opens an OpenCV window showing the live webcam feed with the AURA HUD overlay
-- Starts a local HTTP server at `http://127.0.0.1:5050/metrics`
-- Press **`Q`** to quit
-- Falls back to an animated mock stream if no webcam is found
-
-### Running the Web Dashboard
-
-Simply open `index.html` in your browser (Chrome / Edge recommended for full WebRTC support).
-
-The dashboard will:
-1. Request webcam access for the in-browser face tracker
-2. Auto-connect to the Python metrics server at `localhost:5050` (polls every 500 ms)
-3. Live camera metrics feed the DRI calculation in real-time
-
-> **Note:** Both the browser webcam feed and the Python OpenCV window can run simultaneously — the browser handles the interactive overlay while Python provides the precision oculomotor metrics.
-
----
-
-## Scenario Examples
-
-| Driver State | Inputs Detected | AURA Response |
-|:---|:---|:---|
-| **Fatigue / Micro-sleep** | PERCLOS > 30%, EAR drops repeatedly, Yawn > 5/10min | Collision warning enhanced, Upbeat music, Gentle seat pulse |
-| **Poor Sleep Quality** | Sleep score < 50 (Poor or below) | Seat Massage On, Collision +2s Early, LKA Aggressive, Haptic+Audio alerts |
-| **High Stress / Agitation** | HR > 100 BPM, HRV < 25 ms, Heavy traffic | Calm music + Violet ambient light, Massage seat, Cooling to 20°C |
-| **Critical Health Emergency** | HR = 0 or HRV = 0, PERCLOS > 95% | Emergency overlay, Autonomous braking, SOS broadcast, Hazard lights |
-
----
-
-## Project Structure
+## 📁 Repository Structure
 
 ```
 AURA_Co-Pilot/
-├── index.html              # Main web dashboard
-├── style.css               # Premium dark-mode UI styles
-├── app.js                  # DRI engine, risk logic, UI interactions
-├── face_tracker.js         # In-browser MediaPipe face tracking
-├── aura_camera_tracker.py  # Python CV backend + HTTP metrics server
-└── aura_star_logo.png      # AURA brand asset
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.yml
+│   │   └── feature_request.yml
+│   ├── workflows/
+│   │   └── ci.yml
+│   └── PULL_REQUEST_TEMPLATE.md
+├── app.js                      # Core DRI algorithm & dashboard UI controller
+├── aura_camera_tracker.py       # Python CV backend (OpenCV + MediaPipe Face Mesh)
+├── AURA Logo.png               # Project branding asset
+├── CODE_OF_CONDUCT.md          # Contributor Covenant v2.1
+├── CONTRIBUTING.md             # Guidelines for code & CV contributions
+├── face_tracker.js             # In-browser MediaPipe FaceLandmarker engine
+├── index.html                  # Driver Readiness Dashboard markup
+├── LICENSE                     # MIT License
+├── package.json                # Project metadata & serve scripts
+├── README.md                   # System documentation & technical reference
+├── requirements.txt            # Python dependencies (opencv, mediapipe, numpy)
+├── SECURITY.md                 # Vulnerability reporting procedure
+└── style.css                   # Mercedes dark-mode design system & overlays
 ```
 
 ---
 
-## Benefits
+## 🚀 Quick Start Guide
 
-### 🛡️ Enhanced Safety
-- Early fatigue & micro-sleep detection with Apple Watch-grade sleep quality scoring
-- Proactive cabin intervention the moment sleep quality drops to Poor or below
-- Reduced driver distraction
-- Predictive risk awareness with multi-layered safety escalation
+### Prerequisites
+- **Web Browser**: Chrome, Edge, or Firefox with webcam permissions.
+- **Python**: v3.9+ (optional for backend CV tracking).
+- **Node.js**: v18+ (for local web server).
 
-### 🎯 Personalized Experience
-- Context-aware adaptations (calm vs stressed vs fatigued vs sleep-deprived states)
-- Multi-modal sensor fusion — not just one signal but all of them together
-- Quick preset states for demo and testing
+### 1. Web Dashboard Setup
+```bash
+# Clone the repository
+git clone https://github.com/KhyeVern/AURA_Co-Pilot.git
+cd AURA_Co-Pilot
 
-### 🤝 Stronger Human-Vehicle Connection
-- AI that observes, understands, and acts — without the driver lifting a finger
-- Escalating response system — gentle nudges before hard interventions
-- Sleep quality awareness means AURA starts protecting you before fatigue even shows
+# Start local server
+npx serve . -p 8080
+```
+Open `http://localhost:8080` in your web browser.
+
+### 2. Python CV Tracker Setup (Optional Backend)
+```bash
+# Create and activate virtual environment
+python -m venv .venv
+# On Windows PowerShell:
+.\.venv\Scripts\Activate.ps1
+# On macOS/Linux:
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Launch CV tracker HUD
+python aura_camera_tracker.py
+```
 
 ---
 
-## Vision
+## 📜 License
 
-> To redefine the relationship between humans and vehicles by creating an AI system that is:
-> - **Proactive** rather than reactive
-> - **Adaptive** rather than static
-> - **Collaborative** rather than merely assistive
-> - **Human-centered** rather than technology-centered
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ---
 
-*Mercedes AURA Co-Pilot © 2026 — Intelligent Adaptive Driver Safety System | v2.2.0 | Sleep Quality + Safety Escalation Engine*
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/KhyeVern/AURA_Co-Pilot/issues) or review our [CONTRIBUTING.md](CONTRIBUTING.md) guide.
